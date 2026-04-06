@@ -1,0 +1,29 @@
+===========================================
+КОМАНДЫ ДЛЯ МЕНЕДЖЕРА ЗАДАЧ
+===========================================
+
+СОЗДАТЬ ЗАДАЧУ:
+curl -X POST http://localhost:8080/tasks -H "Content-Type: application/json" -d "{\"title\":\"Купить молоко\",\"dueTime\":\"2026-04-07T23:00:00\"}"
+
+ПОЛУЧИТЬ ВСЕ ЗАДАЧИ:
+curl http://localhost:8080/tasks
+
+ПОЛУЧИТЬ ЗАДАЧУ ПО ID:
+curl http://localhost:8080/tasks/1
+
+ОБНОВИТЬ ЗАДАЧУ:
+curl -X PUT http://localhost:8080/tasks/1 -H "Content-Type: application/json" -d "{\"title\":\"Новое название\",\"dueTime\":\"2026-04-10T23:00:00\"}"
+
+ИЗМЕНИТЬ СТАТУС:
+curl -X PATCH "http://localhost:8080/tasks/1/status?status=COMPLETED_ON_TIME"
+
+УДАЛИТЬ ЗАДАЧУ:
+curl -X DELETE http://localhost:8080/tasks/1
+
+===========================================
+СТАТУСЫ:
+PENDING              - в ожидании
+COMPLETED_ON_TIME    - выполнено в срок
+COMPLETED_LATE       - выполнено с опозданием
+NOT_COMPLETED        - не выполнено
+===========================================
