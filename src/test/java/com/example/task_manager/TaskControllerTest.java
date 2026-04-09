@@ -1,6 +1,7 @@
 package com.example.task_manager;
 
 import com.example.task_manager.controller.TaskController;
+import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.TaskRequest;
 import com.example.task_manager.service.TaskService;
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -176,6 +178,90 @@ class TaskControllerTest {
         mockMvc.perform(delete("/tasks/999"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    @DisplayName("GET /tasks - возвращает задачи со всеми статусами")
+    void getAllTasks_ReturnsAllStatuses() throws Exception {
+
+        Task pendingTask = new Task(
+            "Задача в ожидании",
+            LocalDateTime.now().plusDays(7)
+        );
+        pendingTask.setId(1L);
+        pendingTask.setStatus(Status.PENDING);
+        
+
+        Task onTimeTask= new Task(
+            "Выполнено в срок",
+            LocalDateTime.now().plusDays(7)
+        );
+        onTimeTask.setId(2L);
+        onTimeTask.setStatus(Status.COMPLETED_ON_TIME);
+        onTimeTask.setCompletedAt(LocalDateTime.now());
+
+        Task lateTask = new Task(
+            "Выполнено с опозданием",
+            LocalDateTime.now().minusDays(7)
+        );
+        lateTask.setId(3L);
+        lateTask.setStatus(Status.COMPLETED_LATE);
+        lateTask.setCompletedAt(LocalDateTime.now());
+
+        Task notCompletedTask = new Task(
+            "Не выполнено",
+            LocalDateTime.now().minusDays(7)
+        );
+        notCompletedTask.setId(4L);
+        notCompletedTask.setStatus(Status.NOT_COMPLETED);
+
+        when(taskService.getAllTasks()).thenReturn(
+            Arrays.asList(pendingTask, onTimeTask, lateTask, notCompletedTask)
+        );
+
+        mockMvc.perform(get("/tasks"))
+            .andExpect(jsonPath("$[?(@.status=='PENDING')]").exists())
+            .andExpect(jsonPath("$[?(@.status=='COMPLETED_ON_TIME')]").exists())
+            .andExpect(jsonPath("$[?(@.status=='COMPLETED_LATE')]").exists())
+            .andExpect(jsonPath("$[?(@.status=='NOT_COMPLETED')]").exists());
+    
+    }
+
+    @Test
+    @DisplayName("POST /tasks/{id}/complete - меняет статус")
+    void completeTask_ChangesTaskStatus() throws Exception {
+
+        Task completedTask = new Task(
+            "Задача 1",
+            LocalDateTime.now().plusDays(7)
+        );
+        completedTask.setId(1L);
+        completedTask.setStatus(Status.COMPLETED_ON_TIME);
+        completedTask.setCreatedAt(LocalDateTime.now());
+        completedTask.setCompletedAt(LocalDateTime.now());
+
+        when(taskService.completeTask(1L)).thenReturn(completedTask);
+
+        mockMvc.perform(post("/tasks/1/complete"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED_ON_TIME"))
+                .andExpect(jsonPath("$.completedAt").exists());
+
+        verify(taskService).completeTask(1L);
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+
+
 
 }
 

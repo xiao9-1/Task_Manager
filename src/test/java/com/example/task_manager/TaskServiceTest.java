@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.annotation.Documented;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -129,8 +130,10 @@ class TaskServiceTest {
 
         assertNotNull(updated, "Обновлённая задача не должна быть null");
         assertEquals(id, updated.getId(), "ID задачи не должен измениться");
-        assertEquals("Купить хлеб", updated.getTitle(), "Название должно обновиться");
-        assertEquals(dueTime.plusDays(2), updated.getDueTime(), "Дедлайн должен обновиться");
+        assertEquals("Купить хлеб", updated.getTitle(),
+            "Название должно обновиться");
+        assertEquals(dueTime.plusDays(2), updated.getDueTime(),
+            "Дедлайн должен обновиться");
     }
 
     @Test
@@ -142,5 +145,125 @@ class TaskServiceTest {
 
         assertNull(result, "При обновлении несуществующей задачи должен вернуться null");
     }
+
+    @Test
+    @DisplayName("Проверка всех статусов задач")
+    void testAllFourStatuses() {
+
+        // PENDING
+        TaskRequest pendingRequest = new TaskRequest(
+            "Задача в ожидании",
+            LocalDateTime.now().plusDays(7)
+        );
+        Task pendingTask = taskService.createTask(pendingRequest);
+
+        // ON TIME
+        TaskRequest onTimeRequest = new TaskRequest(
+            "Выполнено в срок",
+            LocalDateTime.now().plusDays(7)
+        );
+        Task onTimeTask = taskService.createTask(onTimeRequest);
+        onTimeTask.setCompletedAt(LocalDateTime.now());
+        onTimeTask.refreshStatus();
+
+        // LATE REQUEST
+        TaskRequest lateRequest = new TaskRequest(
+            "Выполнено с опозданием",
+            LocalDateTime.now().minusDays(7)
+        );
+        Task lateTask = taskService.createTask(lateRequest);
+        lateTask.setCompletedAt(LocalDateTime.now());
+        lateTask.refreshStatus();
+
+        // NOT COMPLETED
+        TaskRequest notCompletedRequest = new TaskRequest(
+            "Не выполнено",
+            LocalDateTime.now().minusDays(7)
+        );
+        Task notCompletedTask = taskService.createTask(notCompletedRequest);
+        notCompletedTask.refreshStatus();
+
+        assertEquals(Status.PENDING, pendingTask.getStatus());
+        assertEquals(Status.COMPLETED_ON_TIME, onTimeTask.getStatus());
+        assertEquals(Status.COMPLETED_LATE, lateTask.getStatus());
+        assertEquals(Status.NOT_COMPLETED, notCompletedTask.getStatus());
+    }
+
+    @Test
+    @DisplayName("completeTask() - status PENDING -> COMPLETED ON TIME")
+    void completeTask_ChangesStatusFromPendingToCompletedTime() {
+        TaskRequest request = new TaskRequest(
+            "Задача для завершения",
+            LocalDateTime.now().plusDays(7)
+        );
+        Task task = taskService.createTask(request);
+        Long taskId = task.getId();
+
+        assertEquals(Status.PENDING, task.getStatus(),
+            "Изначальный статус должен быть PENDING");
+        assertNull(task.getCompletedAt(),
+            "Изначально completedAT = null");
+
+        Task completedTask = taskService.completeTask(taskId);
+        assertEquals(Status.COMPLETED_ON_TIME, completedTask.getStatus(),
+            "После завершения до дедлайна статус должен быть COMPLETED_ON_TIME");
+        assertNotNull(completedTask.getCompletedAt(),
+            "После завершения completedAt должен быть установлен");
+
+    }
+
+    @Test
+    @DisplayName("")
+    void completeTask_OverdueTask_BecomesCompletedLate() {
+        TaskRequest request = new TaskRequest(
+            "Просрочченная задача",
+            LocalDateTime.now().minusDays(7)
+        );
+        Task task = taskService.createTask(request);
+        Long taskId = task.getId();
+
+        assertEquals(Status.NOT_COMPLETED, task.getStatus(), "Просроченная задача должна иметь статус NOT_COMPLETED");
+
+        Task completedTask = taskService.completeTask(taskId);
+
+        assertEquals(Status.COMPLETED_LATE, completedTask.getStatus(),
+            "После завершения просроченной задачи статус должен быть COMPLETED_LATE");
+        assertNotNull(completedTask.getCompletedAt(),
+            "После завершения completedAt должен быть установлен");
+
+
+    }
+
+    @Test
+    @DisplayName("completeTask() - повторное завершение не меняет статус дважды")
+    void completeTask_CompletingAlreadyCompletedTask_KeepsStatus() {
+        TaskRequest request = new TaskRequest(
+            "Задача 1", 
+            LocalDateTime.now().plusDays(7)
+        );
+        Task task = taskService.createTask(request);
+        Long taskId = task.getId();
+        
+        taskService.completeTask(taskId);
+        Status firstStatus = task.getStatus();
+        LocalDateTime firstCompletedAt = task.getCompletedAt();
+        
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        Task reCompletedTask = taskService.completeTask(taskId);
+        
+        assertEquals(firstStatus, reCompletedTask.getStatus(),
+            "Повторное завершение не должно менять статус");
+        assertEquals(firstCompletedAt, reCompletedTask.getCompletedAt(),
+            "Повторное завершение не должно менять время выполнения");
+    }
+
+
+
+
 
 }

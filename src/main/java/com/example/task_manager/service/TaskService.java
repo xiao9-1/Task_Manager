@@ -26,8 +26,11 @@ public class TaskService {
 
     // GET все задачи
     public List<Task> getAllTasks() {
-        log.info("Запрос всех задач. Всего задач: {}", tasks.size());
+        for (Task task : tasks.values()) {
+            task.refreshStatus();
+        }
 
+        log.info("Запрос всех задач. Всего задач: {}", tasks.size());
         return new ArrayList<>(tasks.values());
     }
 
@@ -39,6 +42,9 @@ public class TaskService {
             log.warn("Задача с ID {} не найдена ", id);
             throw new RuntimeException("Задача с ID " + id + " не найдена");
         }
+
+        task.refreshStatus();
+
         log.info("Найдена задача: ID={}, title={}", task.getId(), task.getTitle());
         return task;
     }
@@ -58,9 +64,17 @@ public class TaskService {
 
         task.setCreatedAt(LocalDateTime.now());
 
+        if (task.getDueTime().isBefore(task.getCreatedAt())) {
+        task.setStatus(Status.NOT_COMPLETED);
+        log.info("Задача создана с просроченным дедлайном, статус: NOT_COMPLETED");
+        } else {
+        task.setStatus(Status.PENDING);
+        log.info("Задача создана, статус: PENDING");
+        }
+
         tasks.put(task.getId(), task);
         log.info("Задача успешно создана: ID={}, title={}, createdAt={}"
-                ,task.getId(), task.getTitle(), task.getCreatedAt());
+                ,task.getId(), task.getTitle(), task.getCreatedAt(), task.getStatus());
 
         return task;
 
@@ -74,7 +88,7 @@ public class TaskService {
         Task existingTask = tasks.get(id);
         if (existingTask == null) {
             log.warn("Попытка обновить несуществующую задачу с ID={}", id);
-            return null;
+            throw new RuntimeException("Задача с ID " + id + " не найдена");
         }
 
         if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
@@ -97,6 +111,8 @@ public class TaskService {
         log.info("Задача ID={} обновлена: title '{}' -> '{}', dueTime {} -> {}",
                 id, oldTitle, existingTask.getTitle(), request.getDueTime(), existingTask.getDueTime());
 
+        existingTask.refreshStatus();
+
         return existingTask;
     }
 
@@ -116,8 +132,32 @@ public class TaskService {
 
     }
 
-    // проверка существования задачи
+    public Task completeTask(Long id) {
+        
+        Task task = tasks.get(id);
 
+        if (task == null) {
+            log.warn("Задача с ID {} не найдена ", id);
+            throw new RuntimeException("Задача с ID " + id + " не найдена");
+        }
+        
+        if (task.getCompletedAt() != null) {
+            log.warn("Попытка повторного завершения задачи ID = {}", id);
+            return task;
+        }
+
+        task.setCompletedAt(LocalDateTime.now());
+        
+        if (task.getCompletedAt().isBefore(task.getDueTime())) {
+            task.setStatus(Status.COMPLETED_ON_TIME);
+        } else {
+            task.setStatus(Status.COMPLETED_LATE);
+        }
+        
+        return task;
+    }
+
+    // проверка существования задачи
     public boolean existsById(Long id) {
         log.info("Проверка задачи ID={}", id);
         return tasks.containsKey(id);

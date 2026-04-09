@@ -73,6 +73,24 @@ public class Task {
         this.completedAt = completedAt;
     }
 
+    public void refreshStatus() {
+        LocalDateTime current = LocalDateTime.now();
+        
+        if (completedAt != null) {
+            if (completedAt.isBefore(dueTime)) {
+                status = Status.COMPLETED_ON_TIME;
+            } else {
+                status = Status.COMPLETED_LATE;
+            }
+        } else {
+            if (current.isAfter(dueTime)) {
+                status = Status.NOT_COMPLETED;
+            } else {
+                status = Status.PENDING;
+            }
+        }
+    }
+
 }
 
 

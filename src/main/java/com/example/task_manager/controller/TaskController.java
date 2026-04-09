@@ -36,79 +36,38 @@ public class TaskController {
 
     // GET /tasks/{id} - получить задачу по ID
     @GetMapping("/{id}")
-    public ResponseEntity<?> getTaskById(@PathVariable Long id) {
+    public Task getTaskById(@PathVariable Long id) {
         log.info("GET /tasks/{} - запрос задачи по ID", id);
-        try {
-            Task task = taskService.getTaskById(id);
-            log.info("GET /tasks/{} - задача найдена: {}", id, task.getTitle());
-            return ResponseEntity.ok(task);
-        } catch (RuntimeException e) {
-            log.warn("GET /tasks/{} - задача не найдена: {}", id, e.getMessage());
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            error.put("timestamp", LocalDateTime.now().toString());
-            error.put("status", 404);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-        }
+        return taskService.getTaskById(id);
     }
 
     // POST /tasks - создать задачу
     @PostMapping
-    public ResponseEntity<?> createTask(@RequestBody TaskRequest request) {
+    public ResponseEntity<Task> createTask(@RequestBody TaskRequest request) {
         log.info("POST /tasks - запрос на создание задачи: title='{}', dueTime={}",
                 request.getTitle(), request.getDueTime());
-        try {
-            Task newTask = taskService.createTask(request);
-            log.info("POST /tasks - задача создана с ID={}", newTask.getId());
-            return ResponseEntity.status(HttpStatus.CREATED).body(newTask);
-        } catch (IllegalArgumentException e) {
-            log.error("POST /tasks - ошибка создания: {}", e.getMessage());
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            error.put("timestamp", LocalDateTime.now().toString());
-            error.put("status", 400);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-        }
+        Task newTask = taskService.createTask(request);
+        log.info("POST /tasks - задача создана с ID={}", newTask.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(newTask);
+    }
+
+    @PostMapping("/{id}/complete")
+    public Task completeTask(@PathVariable Long id) {
+        return taskService.completeTask(id);
     }
 
     // PUT /tasks/{id} - обновить задачу
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateTask(@PathVariable Long id, @RequestBody TaskRequest request) {
+    public Task updateTask(@PathVariable Long id, @RequestBody TaskRequest request) {
         log.info("PUT /tasks/{} - запрос на обновление задачи", id);
-        try {
-            Task updatedTask = taskService.updateTask(id, request);
-            if (updatedTask == null) {
-                log.warn("PUT /tasks/{} - задача не найдена", id);
-                Map<String, Object> error = new HashMap<>();
-                error.put("error", "Задача с ID " + id + " не найдена");
-                error.put("timestamp", LocalDateTime.now().toString());
-                error.put("status", 404);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-            }
-            log.info("PUT /tasks/{} - задача обновлена", id);
-            return ResponseEntity.ok(updatedTask);
-        } catch (IllegalArgumentException e) {
-            log.error("PUT /tasks/{} - ошибка обновления: {}", id, e.getMessage());
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            error.put("timestamp", LocalDateTime.now().toString());
-            error.put("status", 400);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-        }
+        return taskService.updateTask(id, request);
     }
 
     // DELETE /tasks/{id} - удалить задачу
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteTask(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
         log.info("DELETE /tasks/{} - запрос на удаление задачи", id);
-        boolean deleted = taskService.deleteTask(id);
-        if (!deleted) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", "Задача с ID " + id + " не найдена");
-            error.put("timestamp", LocalDateTime.now().toString());
-            error.put("status", 404);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-        }
+        taskService.deleteTask(id);
         log.info("DELETE /tasks/{} - задача удалена", id);
         return ResponseEntity.noContent().build();
     }
