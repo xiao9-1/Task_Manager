@@ -4,6 +4,7 @@ import com.example.task_manager.model.Task;
 import com.example.task_manager.model.TaskRequest;
 import com.example.task_manager.model.Status;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,13 +23,19 @@ public class TaskService {
     private static final Logger log = LoggerFactory.getLogger(TaskService.class);
 
     private final Map<Long, Task> tasks = new ConcurrentHashMap<>();
+    private final AtomicLong nextId = new AtomicLong(1);
 
-    private Long nextId = 1L;
+    @Autowired
+    private final StatusService statusService;
+
+    public TaskService(StatusService statusService) {
+        this.statusService = statusService;
+    }
 
     // GET все задачи
     public List<Task> getAllTasks() {
         for (Task task : tasks.values()) {
-            task.refreshStatus();
+            task.setStatus(statusService.refreshStatus(task));
         }
 
         log.info("Запрос всех задач. Всего задач: {}", tasks.size());
@@ -43,7 +51,7 @@ public class TaskService {
             throw new RuntimeException("Задача с ID " + id + " не найдена");
         }
 
-        task.refreshStatus();
+        task.setStatus(statusService.refreshStatus(task));
 
         log.info("Найдена задача: ID={}, title={}", task.getId(), task.getTitle());
         return task;
@@ -60,7 +68,7 @@ public class TaskService {
 
         Task task = new Task(request.getTitle(), request.getDueTime());
 
-        task.setId(nextId++);
+        task.setId(nextId.getAndIncrement());
 
         task.setCreatedAt(LocalDateTime.now());
 
@@ -88,7 +96,8 @@ public class TaskService {
         Task existingTask = tasks.get(id);
         if (existingTask == null) {
             log.warn("Попытка обновить несуществующую задачу с ID={}", id);
-            throw new RuntimeException("Задача с ID " + id + " не найдена");
+            //throw new RuntimeException("Задача с ID " + id + " не найдена");
+            return null;
         }
 
         if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
@@ -111,7 +120,7 @@ public class TaskService {
         log.info("Задача ID={} обновлена: title '{}' -> '{}', dueTime {} -> {}",
                 id, oldTitle, existingTask.getTitle(), request.getDueTime(), existingTask.getDueTime());
 
-        existingTask.refreshStatus();
+        existingTask.setStatus(statusService.refreshStatus(existingTask));
 
         return existingTask;
     }

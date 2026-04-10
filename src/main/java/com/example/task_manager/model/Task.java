@@ -73,6 +73,7 @@ public class Task {
         this.completedAt = completedAt;
     }
 
+    /* 
     public void refreshStatus() {
         LocalDateTime current = LocalDateTime.now();
         
@@ -90,6 +91,7 @@ public class Task {
             }
         }
     }
+    */
 
 }
 

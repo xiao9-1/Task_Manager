@@ -4,6 +4,7 @@ import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.TaskRequest;
 import com.example.task_manager.service.TaskService;
+import com.example.task_manager.service.StatusService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,9 @@ class TaskServiceTest {
     @InjectMocks
     private TaskService taskService;
 
+    @InjectMocks
+    private StatusService statusService;
+
     private TaskRequest validRequest;
     private LocalDateTime dueTime;
 
@@ -31,6 +35,9 @@ class TaskServiceTest {
     void setUp() {
         dueTime = LocalDateTime.now().plusDays(1);
         validRequest = new TaskRequest("Task 1", dueTime);
+
+        StatusService statusService = new StatusService();
+        taskService = new TaskService(statusService);
     }
 
     @Test
@@ -156,6 +163,7 @@ class TaskServiceTest {
             LocalDateTime.now().plusDays(7)
         );
         Task pendingTask = taskService.createTask(pendingRequest);
+        pendingTask.setStatus(statusService.refreshStatus(pendingTask));
 
         // ON TIME
         TaskRequest onTimeRequest = new TaskRequest(
@@ -164,16 +172,16 @@ class TaskServiceTest {
         );
         Task onTimeTask = taskService.createTask(onTimeRequest);
         onTimeTask.setCompletedAt(LocalDateTime.now());
-        onTimeTask.refreshStatus();
+        onTimeTask.setStatus(statusService.refreshStatus(onTimeTask));
 
-        // LATE REQUEST
+        // LATE
         TaskRequest lateRequest = new TaskRequest(
             "Выполнено с опозданием",
             LocalDateTime.now().minusDays(7)
         );
         Task lateTask = taskService.createTask(lateRequest);
         lateTask.setCompletedAt(LocalDateTime.now());
-        lateTask.refreshStatus();
+        lateTask.setStatus(statusService.refreshStatus(lateTask));
 
         // NOT COMPLETED
         TaskRequest notCompletedRequest = new TaskRequest(
@@ -181,7 +189,7 @@ class TaskServiceTest {
             LocalDateTime.now().minusDays(7)
         );
         Task notCompletedTask = taskService.createTask(notCompletedRequest);
-        notCompletedTask.refreshStatus();
+        notCompletedTask.setStatus(statusService.refreshStatus(notCompletedTask));
 
         assertEquals(Status.PENDING, pendingTask.getStatus());
         assertEquals(Status.COMPLETED_ON_TIME, onTimeTask.getStatus());
