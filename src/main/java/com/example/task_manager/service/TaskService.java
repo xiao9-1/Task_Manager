@@ -34,9 +34,9 @@ public class TaskService {
 
     // GET все задачи
     public List<Task> getAllTasks() {
-        for (Task task : tasks.values()) {
-            task.setStatus(statusService.refreshStatus(task));
-        }
+        // for (Task task : tasks.values()) {
+        //     task.setStatus(statusService.refreshStatus(task));
+        // }
 
         log.info("Запрос всех задач. Всего задач: {}", tasks.size());
         return new ArrayList<>(tasks.values());
@@ -51,7 +51,7 @@ public class TaskService {
             throw new RuntimeException("Задача с ID " + id + " не найдена");
         }
 
-        task.setStatus(statusService.refreshStatus(task));
+        // task.setStatus(statusService.refreshStatus(task));
 
         log.info("Найдена задача: ID={}, title={}", task.getId(), task.getTitle());
         return task;
@@ -120,7 +120,7 @@ public class TaskService {
         log.info("Задача ID={} обновлена: title '{}' -> '{}', dueTime {} -> {}",
                 id, oldTitle, existingTask.getTitle(), request.getDueTime(), existingTask.getDueTime());
 
-        existingTask.setStatus(statusService.refreshStatus(existingTask));
+        // existingTask.setStatus(statusService.refreshStatus(existingTask));
 
         return existingTask;
     }
@@ -170,6 +170,10 @@ public class TaskService {
     public boolean existsById(Long id) {
         log.info("Проверка задачи ID={}", id);
         return tasks.containsKey(id);
+    }
+
+    public Map<Long, Task> getTasksMap() {
+        return tasks;
     }
 }
 
