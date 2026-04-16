@@ -39,7 +39,7 @@ public class StatusUpdateService {
         
         for (Task task : tasks.values()) {
             Status oldStatus = task.getStatus();
-            Status newStatus = statusService.refreshStatus(task);
+            Status newStatus = statusService.getCurrentStatus(task);
             
             if (oldStatus != newStatus) {
                 task.setStatus(newStatus);
