@@ -39,7 +39,7 @@ public class TaskController {
 
     // GET /tasks/{id} - получить задачу по ID
     @GetMapping("/{id}")
-    public TaskResponse getTaskById(@PathVariable Long id) {
+    public TaskResponse getTaskById(@PathVariable("id") Long id) {
         log.info("GET /tasks/{} - запрос задачи по ID", id);
         Task task = taskService.getTaskById(id);
         return new TaskResponse(task);
@@ -56,14 +56,14 @@ public class TaskController {
     }
 
     @PostMapping("/{id}/complete")
-    public TaskResponse completeTask(@PathVariable Long id) {
+    public TaskResponse completeTask(@PathVariable("id") Long id) {
         Task task = taskService.completeTask(id);
         return new TaskResponse(task);
     }
 
     // PUT /tasks/{id} - обновить задачу
     @PutMapping("/{id}")
-    public ResponseEntity<TaskResponse> updateTask(@PathVariable Long id, @RequestBody TaskRequest request) {
+    public ResponseEntity<TaskResponse> updateTask(@PathVariable("id") Long id, @RequestBody TaskRequest request) {
         log.info("PUT /tasks/{} - запрос на обновление задачи", id);
 
         Task updatedTask = taskService.updateTask(id, request);
@@ -77,7 +77,7 @@ public class TaskController {
 
     // DELETE /tasks/{id} - удалить задачу
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteTask(@PathVariable("id") Long id) {
         log.info("DELETE /tasks/{} - запрос на удаление задачи", id);
         boolean isDeleted = taskService.deleteTask(id);
 
