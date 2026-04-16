@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Service
 public class StatusService {
 
-    public Status refreshStatus(Task task) {
+    public Status getCurrentStatus(Task task) {
         LocalDateTime now = LocalDateTime.now();
         if (task.getCompletedAt() != null) {
             return task.getCompletedAt().isBefore(task.getDueTime())
