@@ -163,7 +163,7 @@ class TaskServiceTest {
             LocalDateTime.now().plusDays(7)
         );
         Task pendingTask = taskService.createTask(pendingRequest);
-        pendingTask.setStatus(statusService.refreshStatus(pendingTask));
+        pendingTask.setStatus(statusService.getCurrentStatus(pendingTask));
 
         // ON TIME
         TaskRequest onTimeRequest = new TaskRequest(
@@ -172,7 +172,7 @@ class TaskServiceTest {
         );
         Task onTimeTask = taskService.createTask(onTimeRequest);
         onTimeTask.setCompletedAt(LocalDateTime.now());
-        onTimeTask.setStatus(statusService.refreshStatus(onTimeTask));
+        onTimeTask.setStatus(statusService.getCurrentStatus(onTimeTask));
 
         // LATE
         TaskRequest lateRequest = new TaskRequest(
@@ -181,7 +181,7 @@ class TaskServiceTest {
         );
         Task lateTask = taskService.createTask(lateRequest);
         lateTask.setCompletedAt(LocalDateTime.now());
-        lateTask.setStatus(statusService.refreshStatus(lateTask));
+        lateTask.setStatus(statusService.getCurrentStatus(lateTask));
 
         // NOT COMPLETED
         TaskRequest notCompletedRequest = new TaskRequest(
@@ -189,7 +189,7 @@ class TaskServiceTest {
             LocalDateTime.now().minusDays(7)
         );
         Task notCompletedTask = taskService.createTask(notCompletedRequest);
-        notCompletedTask.setStatus(statusService.refreshStatus(notCompletedTask));
+        notCompletedTask.setStatus(statusService.getCurrentStatus(notCompletedTask));
 
         assertEquals(Status.PENDING, pendingTask.getStatus());
         assertEquals(Status.COMPLETED_ON_TIME, onTimeTask.getStatus());
