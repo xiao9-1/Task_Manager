@@ -16,11 +16,24 @@ public class Task {
 
     private LocalDateTime completedAt;
 
+    private Long userId;
+
+    private Double rating;
+
+
     public Task(String title, LocalDateTime dueTime) {
         this.title = title;
         this.dueTime = dueTime;
         this.status = Status.PENDING;
 
+    }
+
+    public Task(String title, LocalDateTime dueTime, Long userId) {
+        this.title = title;
+        this.dueTime = dueTime;
+        this.userId = userId;
+        this.status = Status.PENDING;
+        this.rating = null;
     }
 
     // Геттер - получить значение ID
@@ -71,6 +84,17 @@ public class Task {
 
     public void setCompletedAt(LocalDateTime completedAt) {
         this.completedAt = completedAt;
+    }
+
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
     }
 
     /* 
