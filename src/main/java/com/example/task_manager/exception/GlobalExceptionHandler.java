@@ -11,7 +11,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorDto> handleNotFound(RuntimeException e) {
-        if (e.getMessage().contains("не найдена")) {
+        if ((e.getMessage().contains("не найдена")) || ((e.getMessage().contains("не найден")))) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorDto.notFound(e.getMessage()));
         }
