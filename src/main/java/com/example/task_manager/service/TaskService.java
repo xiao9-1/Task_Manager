@@ -79,13 +79,7 @@ public class TaskService {
             task.setRating(0.0);
         }
 
-        if (task.getDueTime().isBefore(task.getCreatedAt())) {
-        task.setStatus(Status.NOT_COMPLETED);
-        log.info("Задача создана с просроченным дедлайном, статус: NOT_COMPLETED");
-        } else {
-        task.setStatus(Status.PENDING);
-        log.info("Задача создана, статус: PENDING");
-        }
+        task.setStatus(statusService.getCurrentStatus(task));
 
         tasks.put(task.getId(), task);
         log.info("Задача успешно создана: ID={}, title={}, createdAt={}"
@@ -136,7 +130,7 @@ public class TaskService {
         }
 
         User user = userService.getUserById(removed.getUserId());
-        user.setTaskCount(user.getTaskCount() - 1);
+        user.setTaskCount(Math.max(0, user.getTaskCount() - 1));
 
         userService.updateTopStatus(removed.getUserId(), tasks);
 
@@ -161,11 +155,9 @@ public class TaskService {
 
         task.setCompletedAt(LocalDateTime.now());
         
-        if (task.getCompletedAt().isBefore(task.getDueTime())) {
-            task.setStatus(Status.COMPLETED_ON_TIME);
-        } else {
-            task.setStatus(Status.COMPLETED_LATE);
-        }
+        task.setStatus(statusService.getCurrentStatus(task));
+
+        userService.updateTopStatus(task.getUserId(), tasks);
         
         return task;
     }
