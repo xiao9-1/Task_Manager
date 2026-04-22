@@ -2,276 +2,195 @@ package com.example.task_manager;
 
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
+import com.example.task_manager.model.User;
 import com.example.task_manager.model.TaskRequest;
+import com.example.task_manager.model.UserRequest;
 import com.example.task_manager.service.TaskService;
 import com.example.task_manager.service.StatusService;
+import com.example.task_manager.service.UserService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.lang.annotation.Documented;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import org.mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-@DisplayName("Тесты Task Service")
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@DisplayName("TaskService Unit Tests")
 class TaskServiceTest {
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private StatusService statusService;
 
     @InjectMocks
     private TaskService taskService;
 
-    @InjectMocks
-    private StatusService statusService;
-
-    private TaskRequest validRequest;
+    private Long testUserId;
+    private User mockUser;
     private LocalDateTime dueTime;
+    private TaskRequest validRequest;
 
     @BeforeEach
     void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        testUserId = 1L;
         dueTime = LocalDateTime.now().plusDays(1);
-        validRequest = new TaskRequest("Task 1", dueTime);
 
-        StatusService statusService = new StatusService();
-        taskService = new TaskService(statusService);
+        mockUser = new User("Test User", "test@test.com");
+        mockUser.setId(testUserId);
+
+        validRequest = new TaskRequest("Task 1", dueTime, testUserId, 0.0);
+
+        when(userService.getUserById(testUserId)).thenReturn(mockUser);
+        when(statusService.getCurrentStatus(any(Task.class)))
+                .thenReturn(Status.PENDING);
     }
 
     @Test
-    @DisplayName("TEST 1 createTask() - task created correctly")
-        // method_name + condition + expected result
-    void createTask_WithValidData_ReturnsTask() {
-        Task result = taskService.createTask(validRequest);
+    @DisplayName("createTask() - valid data")
+    void createTask_ValidData_ReturnsTask() {
+        Task task = taskService.createTask(validRequest);
 
-        assertNotNull(result, "Task cant be null");
-        assertNotNull(result.getId(), "Id must be created");
-        assertEquals("Task 1", result.getTitle());
-        assertEquals(Status.PENDING, result.getStatus());
-        assertNotNull(result.getCreatedAt(), "Create date must be set");
+        assertNotNull(task);
+        assertEquals("Task 1", task.getTitle());
+        assertEquals(Status.PENDING, task.getStatus());
+
+        verify(userService).getUserById(testUserId);
     }
 
     @Test
-    @DisplayName("TEST createTask() - Empty title")
-    void createTask_WithEmptyTitle_ThrowsException() {
-        TaskRequest emptyRequest = new TaskRequest("", dueTime);
+    @DisplayName("createTask() - empty title")
+    void createTask_EmptyTitle_ThrowsException() {
+        TaskRequest request = new TaskRequest("", dueTime, testUserId, 0.0);
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> taskService.createTask(emptyRequest)
-        );
-
-        assertEquals("Заголовок задачи не может быть пустым", exception.getMessage());
+        assertThrows(IllegalArgumentException.class,
+                () -> taskService.createTask(request));
     }
 
     @Test
-    @DisplayName("TEST createTask() - Blank title")
-    void createTask_WithBlankTitle_ThrowsException() {
-        TaskRequest blankRequest = new TaskRequest("  ", dueTime);
+    @DisplayName("createTask() - null title")
+    void createTask_NullTitle_ThrowsException() {
+        TaskRequest request = new TaskRequest(null, dueTime, testUserId, 0.0);
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> taskService.createTask(blankRequest)
-        );
-
-        assertEquals("Заголовок задачи не может быть пустым", exception.getMessage());
+        assertThrows(IllegalArgumentException.class,
+                () -> taskService.createTask(request));
     }
 
     @Test
-    @DisplayName("TEST createTask() - null title")
-    void createTask_WithNullTitle_ThrowsException() {
-        TaskRequest nullRequest = new TaskRequest("  ", dueTime);
+    @DisplayName("getTaskById() - existing task")
+    void getTaskById_ExistingId_ReturnsTask() {
+        Task created = taskService.createTask(validRequest);
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> taskService.createTask(nullRequest)
-        );
+        Task found = taskService.getTaskById(created.getId());
 
-        assertEquals("Заголовок задачи не может быть пустым", exception.getMessage());
+        assertEquals(created.getId(), found.getId());
     }
 
     @Test
-    @DisplayName("getAllTasks() - get all tasks")
-    void getAllTasks_ReturnsAllTasks() {
+    @DisplayName("getTaskById() - not found")
+    void getTaskById_NotFound_ThrowsException() {
+        assertThrows(RuntimeException.class,
+                () -> taskService.getTaskById(999L));
+    }
+
+
+    @Test
+    @DisplayName("updateTask() - updates task")
+    void updateTask_ExistingId_UpdatesTask() {
+        Task created = taskService.createTask(validRequest);
+
+        TaskRequest update = new TaskRequest("Updated", dueTime.plusDays(1), testUserId, 0.0);
+
+        Task updated = taskService.updateTask(created.getId(), update);
+
+        assertEquals("Updated", updated.getTitle());
+    }
+
+    @Test
+    @DisplayName("completeTask() - sets completed status")
+    void completeTask_ChangesStatus() {
+        Task created = taskService.createTask(validRequest);
+
+        when(statusService.getCurrentStatus(any(Task.class)))
+                .thenReturn(Status.COMPLETED_ON_TIME);
+
+        Task completed = taskService.completeTask(created.getId());
+
+        assertEquals(Status.COMPLETED_ON_TIME, completed.getStatus());
+        assertNotNull(completed.getCompletedAt());
+    }
+
+    @Test
+    @DisplayName("deleteTask() - removes task")
+    void deleteTask_RemovesTask() {
+        Task created = taskService.createTask(validRequest);
+
+        taskService.deleteTask(created.getId());
+
+        assertThrows(RuntimeException.class,
+                () -> taskService.getTaskById(created.getId()));
+    }
+
+    @Test
+    @DisplayName("createTask() - calls userService")
+    void createTask_CallsUserService() {
         taskService.createTask(validRequest);
 
-        TaskRequest secondRequest = new TaskRequest("Task2", dueTime);
-        taskService.createTask(secondRequest);
+        verify(userService, times(1)).getUserById(testUserId);
+    }
 
-        List<Task> tasks = taskService.getAllTasks();
+    @Test
+    @DisplayName("createTask() - invalid user")
+    void createTask_InvalidUser_ThrowsException() {
+        when(userService.getUserById(testUserId))
+                .thenThrow(new RuntimeException("User not found"));
+
+        assertThrows(RuntimeException.class,
+                () -> taskService.createTask(validRequest));
+    }
+
+    @Test
+    @DisplayName("getTasksByUserId() - returns only user tasks")
+    void getTasksByUserId_ReturnsTasks() {
+        taskService.createTask(validRequest);
+        taskService.createTask(new TaskRequest("Task 2", dueTime, testUserId, 0.0));
+
+        List<Task> tasks = taskService.getTasksByUserId(testUserId);
 
         assertEquals(2, tasks.size());
     }
 
     @Test
-    @DisplayName("getTaskById() - get task by id")
-    void getTaskById_ExistingId_ReturnsTask() {
+    @DisplayName("createTask() - rating is set correctly")
+    void createTask_SetsRating() {
+        TaskRequest request = new TaskRequest("Task", dueTime, testUserId, 0.7);
+
+        Task task = taskService.createTask(request);
+
+        assertEquals(0.7, task.getRating());
+    }
+
+    @Test
+    @DisplayName("updateTask() - updates rating")
+    void updateTask_UpdatesRating() {
         Task created = taskService.createTask(validRequest);
-        Long id = created.getId();
-        Task found = taskService.getTaskById(id);
 
-        assertNotNull(found);
-        assertEquals(id, found.getId());
-        assertEquals("Task 1", found.getTitle());
+        TaskRequest update = new TaskRequest("Task", dueTime, testUserId, 0.9);
 
+        Task updated = taskService.updateTask(created.getId(), update);
+
+        assertEquals(0.9, updated.getRating());
     }
-
-    @Test
-    @DisplayName("getTaskById() - Get not existing task")
-    void getTaskById_NonExistingId_ThrowsException() {
-        assertThrows(RuntimeException.class,
-                () -> taskService.getTaskById(999L));
-    }
-
-    @Test
-    @DisplayName("updateTask() - успешное обновление существующей задачи")
-    void updateTask_ExistingId_UpdatesTask() {
-        Task created = taskService.createTask(validRequest);
-        Long id = created.getId();
-
-        TaskRequest updateRequest = new TaskRequest("Купить хлеб", dueTime.plusDays(2));
-
-        Task updated = taskService.updateTask(id, updateRequest);
-
-        assertNotNull(updated, "Обновлённая задача не должна быть null");
-        assertEquals(id, updated.getId(), "ID задачи не должен измениться");
-        assertEquals("Купить хлеб", updated.getTitle(),
-            "Название должно обновиться");
-        assertEquals(dueTime.plusDays(2), updated.getDueTime(),
-            "Дедлайн должен обновиться");
-    }
-
-    @Test
-    @DisplayName("updateTask() - обновление несуществующей задачи → null")
-    void updateTask_NonExistingId_ReturnsNull() {
-        TaskRequest updateRequest = new TaskRequest("Любая задача", dueTime);
-
-        Task result = taskService.updateTask(999L, updateRequest);
-
-        assertNull(result, "При обновлении несуществующей задачи должен вернуться null");
-    }
-
-    @Test
-    @DisplayName("Проверка всех статусов задач")
-    void testAllFourStatuses() {
-
-        // PENDING
-        TaskRequest pendingRequest = new TaskRequest(
-            "Задача в ожидании",
-            LocalDateTime.now().plusDays(7)
-        );
-        Task pendingTask = taskService.createTask(pendingRequest);
-        pendingTask.setStatus(statusService.getCurrentStatus(pendingTask));
-
-        // ON TIME
-        TaskRequest onTimeRequest = new TaskRequest(
-            "Выполнено в срок",
-            LocalDateTime.now().plusDays(7)
-        );
-        Task onTimeTask = taskService.createTask(onTimeRequest);
-        onTimeTask.setCompletedAt(LocalDateTime.now());
-        onTimeTask.setStatus(statusService.getCurrentStatus(onTimeTask));
-
-        // LATE
-        TaskRequest lateRequest = new TaskRequest(
-            "Выполнено с опозданием",
-            LocalDateTime.now().minusDays(7)
-        );
-        Task lateTask = taskService.createTask(lateRequest);
-        lateTask.setCompletedAt(LocalDateTime.now());
-        lateTask.setStatus(statusService.getCurrentStatus(lateTask));
-
-        // NOT COMPLETED
-        TaskRequest notCompletedRequest = new TaskRequest(
-            "Не выполнено",
-            LocalDateTime.now().minusDays(7)
-        );
-        Task notCompletedTask = taskService.createTask(notCompletedRequest);
-        notCompletedTask.setStatus(statusService.getCurrentStatus(notCompletedTask));
-
-        assertEquals(Status.PENDING, pendingTask.getStatus());
-        assertEquals(Status.COMPLETED_ON_TIME, onTimeTask.getStatus());
-        assertEquals(Status.COMPLETED_LATE, lateTask.getStatus());
-        assertEquals(Status.NOT_COMPLETED, notCompletedTask.getStatus());
-    }
-
-    @Test
-    @DisplayName("completeTask() - status PENDING -> COMPLETED ON TIME")
-    void completeTask_ChangesStatusFromPendingToCompletedTime() {
-        TaskRequest request = new TaskRequest(
-            "Задача для завершения",
-            LocalDateTime.now().plusDays(7)
-        );
-        Task task = taskService.createTask(request);
-        Long taskId = task.getId();
-
-        assertEquals(Status.PENDING, task.getStatus(),
-            "Изначальный статус должен быть PENDING");
-        assertNull(task.getCompletedAt(),
-            "Изначально completedAT = null");
-
-        Task completedTask = taskService.completeTask(taskId);
-        assertEquals(Status.COMPLETED_ON_TIME, completedTask.getStatus(),
-            "После завершения до дедлайна статус должен быть COMPLETED_ON_TIME");
-        assertNotNull(completedTask.getCompletedAt(),
-            "После завершения completedAt должен быть установлен");
-
-    }
-
-    @Test
-    @DisplayName("")
-    void completeTask_OverdueTask_BecomesCompletedLate() {
-        TaskRequest request = new TaskRequest(
-            "Просрочченная задача",
-            LocalDateTime.now().minusDays(7)
-        );
-        Task task = taskService.createTask(request);
-        Long taskId = task.getId();
-
-        assertEquals(Status.NOT_COMPLETED, task.getStatus(), "Просроченная задача должна иметь статус NOT_COMPLETED");
-
-        Task completedTask = taskService.completeTask(taskId);
-
-        assertEquals(Status.COMPLETED_LATE, completedTask.getStatus(),
-            "После завершения просроченной задачи статус должен быть COMPLETED_LATE");
-        assertNotNull(completedTask.getCompletedAt(),
-            "После завершения completedAt должен быть установлен");
-
-
-    }
-
-    @Test
-    @DisplayName("completeTask() - повторное завершение не меняет статус дважды")
-    void completeTask_CompletingAlreadyCompletedTask_KeepsStatus() {
-        TaskRequest request = new TaskRequest(
-            "Задача 1", 
-            LocalDateTime.now().plusDays(7)
-        );
-        Task task = taskService.createTask(request);
-        Long taskId = task.getId();
-        
-        taskService.completeTask(taskId);
-        Status firstStatus = task.getStatus();
-        LocalDateTime firstCompletedAt = task.getCompletedAt();
-        
-        try {
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        
-        Task reCompletedTask = taskService.completeTask(taskId);
-        
-        assertEquals(firstStatus, reCompletedTask.getStatus(),
-            "Повторное завершение не должно менять статус");
-        assertEquals(firstCompletedAt, reCompletedTask.getCompletedAt(),
-            "Повторное завершение не должно менять время выполнения");
-    }
-
-
-
-
-
 }

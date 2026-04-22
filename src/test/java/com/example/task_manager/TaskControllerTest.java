@@ -54,7 +54,9 @@ class TaskControllerTest {
         testTask.setId(1L);
         testTask.setCreatedAt(LocalDateTime.now());
 
-        testRequest = new TaskRequest("Купить молоко", dueTime);
+        testTask.setRating(0.0);
+
+        testRequest = new TaskRequest("Купить молоко", dueTime, 1L, 0.0);
     }
 
     @Test
@@ -121,7 +123,7 @@ class TaskControllerTest {
     @Test
     @DisplayName("POST /tasks - пустой заголовок - 400 Bad Request")
     void createTask_EmptyTitle_Returns400() throws Exception {
-        TaskRequest emptyRequest = new TaskRequest("", dueTime);
+        TaskRequest emptyRequest = new TaskRequest("", dueTime, 1L, 0.0);
 
         when(taskService.createTask(any(TaskRequest.class)))
                 .thenThrow(new IllegalArgumentException("Заголовок задачи не может быть пустым"));
@@ -249,6 +251,50 @@ class TaskControllerTest {
         verify(taskService).completeTask(1L);
 
     }
+
+    @Test
+    @DisplayName("GET /tasks/user/1 - возвращает задачи пользователя")
+    void getUserTasks_ValidUserId_ReturnsTasks() throws Exception {
+        List<Task> tasks = Arrays.asList(testTask);
+        when(taskService.getTasksByUserId(1L)).thenReturn(tasks);
+
+        mockMvc.perform(get("/tasks/user/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].title").value("Купить молоко"))
+                .andExpect(jsonPath("$[0].status").value("PENDING"));
+
+        verify(taskService).getTasksByUserId(1L);
+    }
+
+    @Test
+    @DisplayName("GET /tasks/user/1 - пользователь без задач возвращает пустой список")
+    void getUserTasks_UserWithNoTasks_ReturnsEmptyList() throws Exception {
+        when(taskService.getTasksByUserId(1L)).thenReturn(Arrays.asList());
+
+        mockMvc.perform(get("/tasks/user/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        verify(taskService).getTasksByUserId(1L);
+    }
+
+    @Test
+    @DisplayName("GET /tasks/user/999 - несуществующий пользователь → 404")
+    void getUserTasks_InvalidUserId_Returns404() throws Exception {
+        when(taskService.getTasksByUserId(999L))
+                .thenThrow(new RuntimeException("Пользователь с ID 999 не найден"));
+
+        mockMvc.perform(get("/tasks/user/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Пользователь с ID 999 не найден"));
+
+        verify(taskService).getTasksByUserId(999L);
+    }
+
+
+
 }
 
 
