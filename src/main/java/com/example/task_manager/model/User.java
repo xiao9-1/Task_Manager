@@ -59,7 +59,6 @@ public class User {
         this.taskCount = taskCount;
     }
     
-
     public boolean isTop() {
         return top;
     }

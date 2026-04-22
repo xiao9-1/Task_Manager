@@ -65,6 +65,8 @@ public class UserService {
 
         users.put(user.getId(), user);
 
+        user.setTaskCount(0);
+
         log.info("Пользователь создан: ID={}, name={}, email={}",
                 user.getId(), user.getName(), user.getEmail());
 
