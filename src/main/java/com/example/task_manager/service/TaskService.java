@@ -2,77 +2,76 @@ package com.example.task_manager.service;
 
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.TaskRequest;
-import com.example.task_manager.model.Status;
 import com.example.task_manager.model.User;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.task_manager.repository.TaskRepository;
+import com.example.task_manager.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Service
 public class TaskService {
 
     private static final Logger log = LoggerFactory.getLogger(TaskService.class);
 
-    private final Map<Long, Task> tasks = new ConcurrentHashMap<>();
-    private final AtomicLong nextId = new AtomicLong(1);
-
+    private final TaskRepository taskRepository;
+    private final UserRepository userRepository;
     private final StatusService statusService;
     private final UserService userService;
 
-    public TaskService(StatusService statusService, UserService userService) {
+    public TaskService(TaskRepository taskRepository, UserRepository userRepository, StatusService statusService, UserService userService) {
+        this.taskRepository = taskRepository;
+        this.userRepository = userRepository;
         this.statusService = statusService;
         this.userService = userService;
     }
 
     // GET все задачи
     public List<Task> getAllTasks() {
-        log.info("Запрос всех задач. Всего задач: {}", tasks.size());
-        return new ArrayList<>(tasks.values());
+        log.info("Запрос всех задач");
+        List<Task> tasks = taskRepository.findAll();
+        log.debug("Найдено задач: {}", tasks.size());
+        return tasks;
     }
 
     // GET задача по id
     public Task getTaskById(Long id) {
         log.debug("Поиск задачи с ID: {} ", id);
-        Task task = tasks.get(id);
-        if (task == null) {
-            log.warn("Задача с ID {} не найдена ", id);
-            throw new RuntimeException("Задача с ID " + id + " не найдена");
-        }
-
-        log.info("Найдена задача: ID={}, title={}", task.getId(), task.getTitle());
-        return task;
+        
+        return taskRepository.findById(id)
+                .map(task -> {
+                    log.info("Найдена задача: ID={}, title={}", task.getId(), task.getTitle());
+                    return task;
+                })
+                .orElseThrow(() -> {
+                    log.warn("Задача с ID {} не найдена", id);
+                    return new RuntimeException("Задача с ID " + id + " не найдена");
+                });
     }
 
     // POST Создать новую задачу
     public Task createTask(TaskRequest request) {
-        log.info("Запрос на создание задачи: title='{}', dueTime={}, userId={}",
-                request.title(), request.dueTime(), request.userId());
+        log.info("Запрос на создание задачи: title='{}', dueTime={}, userId={}, rating={}",
+                request.title(), request.dueTime(), request.userId(), request.rating());
 
-        User user = userService.getUserById(request.userId());
-                
         if (request.title() == null || request.title().trim().isEmpty()) {
             log.error("Попытка создать задачу с пустым заголовком");
             throw new IllegalArgumentException("Заголовок задачи не может быть пустым");
         }
 
+        User user = userRepository.findById(request.userId())
+                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + request.userId() + " не найден"));
+
         validateRating(request.rating());
 
         Task task = new Task(request.title(), request.dueTime(), request.userId());
-
-        task.setId(nextId.getAndIncrement());
-
         task.setCreatedAt(LocalDateTime.now());
 
+        // Устанавливаем рейтинг (если null → 0)
         if (request.rating() != null) {
             task.setRating(request.rating());
         } else {
@@ -81,107 +80,129 @@ public class TaskService {
 
         task.setStatus(statusService.getCurrentStatus(task));
 
-        tasks.put(task.getId(), task);
-        log.info("Задача успешно создана: ID={}, title={}, createdAt={}"
-                ,task.getId(), task.getTitle(), task.getCreatedAt(), task.getStatus());
+        Task savedTask = taskRepository.save(task);
 
+        log.info("Задача успешно создана: ID={}, title={}, createdAt={}, status={}",
+                savedTask.getId(), savedTask.getTitle(), savedTask.getCreatedAt(), savedTask.getStatus());
+
+        // Обновляем taskCount пользователя
         user.setTaskCount(user.getTaskCount() + 1);
-        userService.updateTopStatus(request.userId(), tasks);
+        userRepository.save(user);
 
-        return task;
+        // Обновляем TOP статус пользователя
+        userService.updateTopStatus(request.userId(), taskRepository.getTasksMap());
+
+        return savedTask;
 
     }
 
     public Task updateTask(Long id, TaskRequest request) {
         log.info("Обновление задачи ID={}", id);
 
-        Task task = tasks.get(id);
-        if (task == null) {
-            throw new RuntimeException("Задача с ID " + id + " не найдена");
-        }
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Задача с ID " + id + " не найдена"));
 
         if (request.title() == null || request.title().trim().isEmpty()) {
             throw new IllegalArgumentException("Заголовок задачи не может быть пустым");
         }
 
-        LocalDateTime oldDueTime = task.getDueTime();
-
+        // Обновляем поля
         task.setTitle(request.title());
         task.setDueTime(request.dueTime());
-        task.setRating(request.rating());
 
-        // делегируем статус
+        // Обновляем рейтинг только если он передан
+        if (request.rating() != null) {
+            validateRating(request.rating());
+            task.setRating(request.rating());
+        }
+
         task.setStatus(statusService.getCurrentStatus(task));
 
-        log.info("Задача ID={} обновлена: dueTime {} -> {}", id, oldDueTime, task.getDueTime());
+        Task savedTask = taskRepository.save(task);
 
-        return task;
+        log.info("Задача ID={} обновлена: dueTime={}, rating={}",
+                id, savedTask.getDueTime(), savedTask.getRating());
+
+        // Обновляем TOP статус пользователя
+        userService.updateTopStatus(request.userId(), taskRepository.getTasksMap());
+
+        return savedTask;
     }
 
     // DELETE Удалить задачу
     public boolean deleteTask(Long id) {
         log.info("Запрос на удаление задачи с ID={}", id);
 
-        Task removed = tasks.remove(id);
+        Task task = taskRepository.findById(id).orElse(null);
 
-        if (removed == null) {
+        if (task == null) {
             log.warn("Попытка удалить несуществующую задачу с ID={}", id);
             return false;
         }
 
-        User user = userService.getUserById(removed.getUserId());
-        user.setTaskCount(Math.max(0, user.getTaskCount() - 1));
+        Long userId = task.getUserId();
+        
+        taskRepository.deleteById(id);
 
-        userService.updateTopStatus(removed.getUserId(), tasks);
+        userRepository.findById(userId).ifPresent(user -> {
+            user.setTaskCount(Math.max(0, user.getTaskCount() - 1));
+            userRepository.save(user);
+        });
 
-        log.info("Задача ID={} ('{}') успешно удалена", id, removed.getTitle());
+        userService.updateTopStatus(userId, taskRepository.getTasksMap());
 
-        return removed != null;
+        log.info("Задача ID={} ('{}') успешно удалена", id, task.getTitle());
+
+        return true;
     }
 
     public Task completeTask(Long id) {
         
-        Task task = tasks.get(id);
+        log.info("Завершение задачи ID={}", id);
 
-        if (task == null) {
-            log.warn("Задача с ID {} не найдена ", id);
-            throw new RuntimeException("Задача с ID " + id + " не найдена");
-        }
-        
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Задача с ID {} не найдена", id);
+                    return new RuntimeException("Задача с ID " + id + " не найдена");
+                });
+
         if (task.getCompletedAt() != null) {
-            log.warn("Попытка повторного завершения задачи ID = {}", id);
+            log.warn("Попытка повторного завершения задачи ID={}", id);
             return task;
         }
 
         task.setCompletedAt(LocalDateTime.now());
-        
         task.setStatus(statusService.getCurrentStatus(task));
 
-        userService.updateTopStatus(task.getUserId(), tasks);
-        
-        return task;
+        Task savedTask = taskRepository.save(task);
+
+        // Обновляем TOP статус пользователя
+        userService.updateTopStatus(task.getUserId(), taskRepository.getTasksMap());
+
+        log.info("Задача ID={} завершена, статус={}", id, savedTask.getStatus());
+
+        return savedTask;
     }
 
     // проверка существования задачи
     public boolean existsById(Long id) {
-        log.info("Проверка задачи ID={}", id);
-        return tasks.containsKey(id);
+        log.debug("Проверка существования задачи ID={}", id);
+        return taskRepository.existsById(id);
     }
 
     public Map<Long, Task> getTasksMap() {
-        return tasks;
+        return taskRepository.getTasksMap();
     }
 
     // Get / все задачи пользователя
     public List<Task> getTasksByUserId(Long userId) {
         log.info("Запрос всех задач пользователя с Id {}", userId);
 
-        userService.getUserById(userId);
+        // Проверяем существование пользователя
+        userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
 
-        return tasks.values().stream().filter(
-                            task -> task.getUserId().
-                            equals(userId)).
-                            toList();
+        return taskRepository.findAllByUserId(userId);
     }
 
     private void validateRating(Double rating) {

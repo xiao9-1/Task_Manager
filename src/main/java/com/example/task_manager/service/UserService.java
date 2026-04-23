@@ -2,87 +2,92 @@ package com.example.task_manager.service;
 
 import com.example.task_manager.model.User;
 import com.example.task_manager.model.UserRequest;
+import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
-    private final Map<Long, User> users = new ConcurrentHashMap<>();
-    private final AtomicLong nextId = new AtomicLong(1);
+    private final UserRepository userRepository;
+
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public List<User> getAllUsers() {
-        log.info("Запрос всех пользователей. Всего: {}", users.size());
-        return new ArrayList<>(users.values());
+        log.info("Запрос всех пользователей.");
+        List<User> users = userRepository.findAll();
+        log.debug("Найдено пользователей: {}", users.size());
+        return users;
     }
 
     public User getUserById(Long id) {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("Id должен быть положительным");
-        }
-
-        log.debug("Поиск пользователя с Id {}", id);
-
-        User user = users.get(id);
-        if (user == null) {
-            log.warn("Пользователь с Id {} не найден", id);
-            throw new RuntimeException("Пользователь с Id " + id + " не найден");
-        }
-
-        return user;
+        log.info("Поиск пользователя по ID: {}", id);
+        
+        return userRepository.findById(id)
+                .map(user -> {
+                    log.debug("Пользователь найден: ID={}, name={}, email={}, taskCount={}, top={}", 
+                            user.getId(), user.getName(), user.getEmail(), user.getTaskCount(), user.isTop());
+                    return user;
+                })
+                .orElseThrow(() -> {
+                    log.warn("Пользователь с ID {} не найден", id);
+                    return new RuntimeException("Пользователь с ID " + id + " не найден");
+                });
     }
 
     public User createUser(UserRequest request) {
-        log.info("Создание пользователя: name='{}', email='{}'", request.name(), request.email());
+        log.info("Создание нового пользователя: name='{}', email='{}'", request.name(), request.email());
 
         if (request.name() == null || request.name().trim().isEmpty()) {
+            log.error("Попытка создать пользователя с пустым именем");
             throw new IllegalArgumentException("Имя пользователя не может быть пустым");
         }
 
         if (request.email() == null || request.email().trim().isEmpty()) {
-            throw new IllegalArgumentException("Почта не может быть пустой");
-        }
-
-        if (!request.email().contains("@")) {
-            throw new IllegalArgumentException("Некорректный email");
+            log.error("Попытка создать пользователя с пустым email");
+            throw new IllegalArgumentException("Email не может быть пустым");
         }
 
         User user = new User(request.name(), request.email());
-        user.setId(nextId.getAndIncrement());
-        user.setCreatedAt(LocalDateTime.now());
-
-        users.put(user.getId(), user);
-
-        user.setTaskCount(0);
-
-        log.info("Пользователь создан: ID={}, name={}, email={}",
-                user.getId(), user.getName(), user.getEmail());
-
-        return user;
+        User savedUser = userRepository.save(user);
+        
+        log.info("Пользователь успешно создан: ID={}, name='{}', email='{}', createdAt={}, taskCount={}, top={}", 
+                savedUser.getId(), savedUser.getName(), savedUser.getEmail(), 
+                savedUser.getCreatedAt(), savedUser.getTaskCount(), savedUser.isTop());
+        
+        return savedUser;
     }
 
     public void updateTopStatus(Long userId, Map<Long, Task> tasks) {
-        log.info("Обновление top статуса для пользователя {}", userId);
-
+        log.info("Обновление TOP статуса для пользователя ID={}", userId);
+        
         User user = getUserById(userId);
-
+        
         double totalRating = tasks.values().stream()
-                .filter(t -> t.getUserId() != null && t.getUserId().equals(userId))
+                .filter(task -> task.getUserId() != null && task.getUserId().equals(userId))
                 .mapToDouble(Task::getRating)
                 .sum();
-
-        user.setTop(totalRating >= 1.0);
+        
+        boolean oldTop = user.isTop();
+        boolean newTop = totalRating >= 1.0;
+        
+        if (oldTop != newTop) {
+            user.setTop(newTop);
+            userRepository.save(user);
+            log.info("TOP статус пользователя ID={} изменён: {} -> {} (сумма рейтингов={})", 
+                    userId, oldTop, newTop, totalRating);
+        } else {
+            log.debug("TOP статус пользователя ID={} не изменился: {} (сумма рейтингов={})", 
+                    userId, newTop, totalRating);
+        }
     }
 }
