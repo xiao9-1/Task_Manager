@@ -1,13 +1,10 @@
 package com.example.task_manager.service;
 
 
+import com.example.task_manager.dto.TaskRequest;
+import com.example.task_manager.dto.UserRequest;
 import com.example.task_manager.model.Task;
-import com.example.task_manager.model.TaskRequest;
 import com.example.task_manager.model.User;
-import com.example.task_manager.model.UserRequest;
-import com.example.task_manager.service.StatusService;
-import com.example.task_manager.service.TaskService;
-import com.example.task_manager.service.UserService;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -199,5 +196,29 @@ public class UserServiceTest {
         assertTrue(userService.getUserById(userId).isTop());
     }
 
-    
+    @Test
+    @DisplayName("createUser() - email уже существует → исключение")
+    void createUser_DuplicateEmail_ThrowsException() {
+        
+        UserRequest duplicateRequest = new UserRequest("Другой пользователь", "test@example.com");
+        
+        IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> userService.createUser(duplicateRequest)
+        );
+        
+        assertEquals("Пользователь с такой почтой уже существует.", exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("createUser() - email с разным регистром считается дубликатом")
+    void createUser_EmailCaseInsensitive_ThrowsException() {
+        
+        UserRequest duplicateRequest = new UserRequest("Другой", "TEST@EXAMPLE.COM");
+        
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> userService.createUser(duplicateRequest)
+        );
+    }    
 }
