@@ -1,10 +1,6 @@
 package com.example.task_manager.controller;
-import com.example.task_manager.controller.TaskController;
-import com.example.task_manager.controller.UserController;
-
+import com.example.task_manager.dto.UserRequest;
 import com.example.task_manager.model.User;
-import com.example.task_manager.model.UserRequest;
-import com.example.task_manager.model.UserResponse;
 import com.example.task_manager.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;

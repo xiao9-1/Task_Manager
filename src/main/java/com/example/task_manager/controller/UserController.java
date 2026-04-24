@@ -1,7 +1,7 @@
 package com.example.task_manager.controller;
 
-import com.example.task_manager.model.UserResponse;
-import com.example.task_manager.model.UserRequest;
+import com.example.task_manager.dto.UserRequest;
+import com.example.task_manager.dto.UserResponse;
 import com.example.task_manager.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

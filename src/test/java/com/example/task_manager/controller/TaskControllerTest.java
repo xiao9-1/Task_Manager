@@ -1,9 +1,8 @@
 package com.example.task_manager.controller;
 
-import com.example.task_manager.controller.TaskController;
+import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
-import com.example.task_manager.model.TaskRequest;
 import com.example.task_manager.service.TaskService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +21,6 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;

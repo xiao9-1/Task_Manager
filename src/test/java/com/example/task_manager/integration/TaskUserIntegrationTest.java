@@ -1,9 +1,8 @@
 package com.example.task_manager.integration;
 
+import com.example.task_manager.dto.TaskRequest;
+import com.example.task_manager.dto.UserRequest;
 import com.example.task_manager.model.Task;
-import com.example.task_manager.model.TaskRequest;
-import com.example.task_manager.model.User;
-import com.example.task_manager.model.UserRequest;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.service.StatusService;

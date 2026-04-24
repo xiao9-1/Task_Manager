@@ -1,10 +1,11 @@
 package com.example.task_manager.exception;
 
-import com.example.task_manager.model.ErrorDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import com.example.task_manager.dto.ErrorDto;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
