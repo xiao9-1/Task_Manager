@@ -1,9 +1,10 @@
 package com.example.task_manager.service;
 
 import com.example.task_manager.model.User;
-import com.example.task_manager.model.UserRequest;
 import com.example.task_manager.repository.UserRepository;
+import com.example.task_manager.dto.UserRequest;
 import com.example.task_manager.model.Task;
+import com.example.task_manager.utils.EmailValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -52,9 +53,13 @@ public class UserService {
             throw new IllegalArgumentException("Имя пользователя не может быть пустым");
         }
 
-        if (request.email() == null || request.email().trim().isEmpty()) {
-            log.error("Попытка создать пользователя с пустым email");
-            throw new IllegalArgumentException("Email не может быть пустым");
+        if (!EmailValidator.isValid(request.email())) {
+            throw new IllegalArgumentException("Некорректный формат email");
+        }
+
+        if (userRepository.existsByEmail(request.email())) {
+            log.warn("Попытка создать пользователя с уже существующей почтой {}", request.email());
+            throw new IllegalArgumentException("Пользователь с такой почтой уже существует.");
         }
 
         User user = new User(request.name(), request.email());
