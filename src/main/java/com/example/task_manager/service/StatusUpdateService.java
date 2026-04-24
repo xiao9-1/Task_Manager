@@ -2,7 +2,6 @@ package com.example.task_manager.service;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
 
-import com.example.task_manager.model.Task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.EnableScheduling;

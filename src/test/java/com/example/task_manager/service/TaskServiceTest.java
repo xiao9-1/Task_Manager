@@ -1,15 +1,11 @@
 package com.example.task_manager.service;
 
+import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
-import com.example.task_manager.model.TaskRequest;
 import com.example.task_manager.model.User;
-import com.example.task_manager.model.UserRequest;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
-import com.example.task_manager.service.StatusService;
-import com.example.task_manager.service.TaskService;
-import com.example.task_manager.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
