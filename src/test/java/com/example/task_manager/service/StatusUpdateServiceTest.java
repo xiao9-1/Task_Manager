@@ -7,18 +7,16 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import com.example.task_manager.dto.TaskRequest;
+import com.example.task_manager.dto.UserRequest;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
-import com.example.task_manager.model.TaskRequest;
 import com.example.task_manager.model.User;
-import com.example.task_manager.model.UserRequest;
-import com.example.task_manager.service.StatusUpdateService;
-import com.example.task_manager.service.TaskService;
-import com.example.task_manager.service.UserService;
+import com.example.task_manager.repository.TaskRepository;
+import com.example.task_manager.repository.UserRepository;
 
 @SpringBootTest
 public class StatusUpdateServiceTest {
@@ -34,8 +32,18 @@ public class StatusUpdateServiceTest {
 
     @BeforeEach
     void set_up() {
-        UserRequest userRequest = new UserRequest("Тестовый пользователь", "12@ru");
-        User testUserId = userService.createUser(userRequest);
+
+        TaskRepository taskRepository = new TaskRepository();
+        UserRepository userRepository = new UserRepository();
+        
+        taskRepository.clear();
+        userRepository.clear();
+        
+        // Падали тесты из-за проверки на уникальность
+        String uniqueEmail = "test_" + System.currentTimeMillis() + "@test.com";
+        UserRequest userRequest = new UserRequest("Тестовый пользователь", uniqueEmail);
+        User testUser = userService.createUser(userRequest);
+        Long testUserId = testUser.getId();
     }
 
     @Test
