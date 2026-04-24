@@ -38,7 +38,16 @@ public class UserRepository {
         return users.containsKey(id);
     }
 
+    public boolean existsByEmail(String email) {
+        return users.values().stream().anyMatch(user -> user.getEmail().equalsIgnoreCase(email));
+    }
+
     public Map<Long, User> getUsersMap() {
         return users;
+    }
+
+    public void clear() {
+        users.clear();
+        nextId.set(1L);
     }
 }
