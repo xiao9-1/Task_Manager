@@ -1,4 +1,4 @@
-package com.example.task_manager.scheduler;
+package com.example.task_manager.component;
 
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.service.StatusUpdateService;
