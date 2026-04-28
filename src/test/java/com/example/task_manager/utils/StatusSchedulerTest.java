@@ -12,10 +12,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.example.task_manager.component.StatusScheduler;
 import com.example.task_manager.model.Task;
 
 import com.example.task_manager.repository.TaskRepository;
-import com.example.task_manager.scheduler.StatusScheduler;
 import com.example.task_manager.service.StatusUpdateService;
 
 @ExtendWith(MockitoExtension.class)
