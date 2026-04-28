@@ -1,7 +1,5 @@
 package com.example.task_manager.utils;
 
-import com.example.task_manager.utils.EmailValidator;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

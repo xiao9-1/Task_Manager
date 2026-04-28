@@ -21,31 +21,31 @@ public class StatusUpdateService {
 
     public int updateAllStatuses(Collection<Task> tasks) {
 
-    log.debug("Запуск обновления статусов. Количество задач: {}", tasks.size());
+        log.debug("Запуск обновления статусов. Количество задач: {}", tasks.size());
 
-    int updated = 0;
+        int updated = 0;
 
-    for (Task task : tasks) {
+        for (Task task : tasks) {
 
-        Status oldStatus = task.getStatus();
-        Status newStatus = statusService.getCurrentStatus(task);
+            Status oldStatus = task.getStatus();
+            Status newStatus = statusService.getCurrentStatus(task);
 
-        if (oldStatus != newStatus) {
+            if (oldStatus != newStatus) {
 
-            task.setStatus(newStatus);
-            updated++;
+                task.setStatus(newStatus);
+                updated++;
 
-            log.info("Задача ID={} обновлена: {} -> {}",
-                    task.getId(), oldStatus, newStatus);
+                log.info("Задача ID={} обновлена: {} -> {}",
+                        task.getId(), oldStatus, newStatus);
+            }
+            else {
+                log.debug("Задача ID={} без изменений: статус={}",
+                        task.getId(), oldStatus);
+            }
         }
-        else {
-            log.debug("Задача ID={} без изменений: статус={}",
-                    task.getId(), oldStatus);
-        }
+
+        log.info("Обновление статусов завершено. Изменено задач: {}", updated);
+
+        return updated;
     }
-
-    log.info("Обновление статусов завершено. Изменено задач: {}", updated);
-
-    return updated;
-}
 }
