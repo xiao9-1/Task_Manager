@@ -18,6 +18,7 @@ import com.example.task_manager.model.Task;
 
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("=======StatusUpdateServiceTest Test=======")
 class StatusUpdateServiceTest {
 
     @Mock
@@ -29,10 +30,9 @@ class StatusUpdateServiceTest {
     @Test
     @DisplayName("Просроченная задача становится NOT_COMPLETED, затем COMPLETED_LATE")
     void updateAllStatuses_lateFlow() {
-
         Task task = new Task("Task 1", LocalDateTime.now());
         task.setId(1L);
-        task.setUserId(1L);
+        //task.setUser(user);
         task.setStatus(Status.PENDING);
         task.setDueTime(LocalDateTime.now().minusSeconds(1));
 

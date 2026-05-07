@@ -4,8 +4,10 @@ import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
+
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,7 +25,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("TaskService Unit Tests")
+@DisplayName("=======TaskService Unit Tests=======")
 class TaskServiceTest {
 
     @Mock
@@ -57,7 +59,7 @@ class TaskServiceTest {
 
         validRequest = new TaskRequest("Task 1", dueTime, testUserId, 0.0);
 
-        mockTask = new Task("Task 1", dueTime, testUserId);
+        mockTask = new Task("Task 1", dueTime, mockUser);
         mockTask.setId(1L);
         mockTask.setStatus(Status.PENDING);
         mockTask.setRating(0.0);
@@ -75,7 +77,7 @@ class TaskServiceTest {
             return task;
         });
         when(statusService.getCurrentStatus(any(Task.class))).thenReturn(Status.PENDING);
-        doNothing().when(userService).updateTopStatus(anyLong(), anyMap());
+        doNothing().when(userService).updateTopStatus(anyLong());
 
         Task task = taskService.createTask(validRequest);
 
@@ -131,7 +133,7 @@ class TaskServiceTest {
         when(taskRepository.findById(1L)).thenReturn(Optional.of(mockTask));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(statusService.getCurrentStatus(any(Task.class))).thenReturn(Status.PENDING);
-        doNothing().when(userService).updateTopStatus(anyLong(), anyMap());
+        doNothing().when(userService).updateTopStatus(anyLong());
 
         TaskRequest update = new TaskRequest("Updated", dueTime.plusDays(1), testUserId, 0.0);
         Task updated = taskService.updateTask(1L, update);
@@ -145,7 +147,7 @@ class TaskServiceTest {
         when(taskRepository.findById(1L)).thenReturn(Optional.of(mockTask));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(statusService.getCurrentStatus(any(Task.class))).thenReturn(Status.COMPLETED_ON_TIME);
-        doNothing().when(userService).updateTopStatus(anyLong(), anyMap());
+        doNothing().when(userService).updateTopStatus(anyLong());
 
         Task completed = taskService.completeTask(1L);
 
@@ -159,7 +161,7 @@ class TaskServiceTest {
         when(taskRepository.findById(1L)).thenReturn(Optional.of(mockTask));
         when(userRepository.findById(testUserId)).thenReturn(Optional.of(mockUser));
         doNothing().when(taskRepository).deleteById(1L);
-        doNothing().when(userService).updateTopStatus(anyLong(), anyMap());
+        doNothing().when(userService).updateTopStatus(anyLong());
 
         boolean deleted = taskService.deleteTask(1L);
 
@@ -173,7 +175,7 @@ class TaskServiceTest {
         when(userRepository.findById(testUserId)).thenReturn(Optional.of(mockUser));
         when(taskRepository.save(any(Task.class))).thenReturn(mockTask);
         when(statusService.getCurrentStatus(any(Task.class))).thenReturn(Status.PENDING);
-        doNothing().when(userService).updateTopStatus(anyLong(), anyMap());
+        doNothing().when(userService).updateTopStatus(anyLong());
 
         taskService.createTask(validRequest);
 
@@ -206,7 +208,7 @@ class TaskServiceTest {
         when(userRepository.findById(testUserId)).thenReturn(Optional.of(mockUser));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(statusService.getCurrentStatus(any(Task.class))).thenReturn(Status.PENDING);
-        doNothing().when(userService).updateTopStatus(anyLong(), anyMap());
+        doNothing().when(userService).updateTopStatus(anyLong());
 
         TaskRequest request = new TaskRequest("Task", dueTime, testUserId, 0.7);
         Task task = taskService.createTask(request);
@@ -220,7 +222,7 @@ class TaskServiceTest {
         when(taskRepository.findById(1L)).thenReturn(Optional.of(mockTask));
         when(taskRepository.save(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(statusService.getCurrentStatus(any(Task.class))).thenReturn(Status.PENDING);
-        doNothing().when(userService).updateTopStatus(anyLong(), anyMap());
+        doNothing().when(userService).updateTopStatus(anyLong());
 
         TaskRequest update = new TaskRequest("Task", dueTime, testUserId, 0.9);
         Task updated = taskService.updateTask(1L, update);
