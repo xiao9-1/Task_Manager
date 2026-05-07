@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Optional;
 
 import com.example.task_manager.model.Task;
-import com.example.task_manager.model.User;
 
 public interface TaskRepository {
     Task save(Task task);
