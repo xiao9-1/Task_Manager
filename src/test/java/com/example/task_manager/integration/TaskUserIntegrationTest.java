@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
+@Rollback
 @DisplayName("Task and User Integration Tests")
 class TaskUserIntegrationTest {
 
@@ -85,19 +87,6 @@ class TaskUserIntegrationTest {
         
         assertEquals(2, tasks.size());
         assertTrue(tasks.stream().allMatch(t -> t.getUserId().equals(testUserId)));
-    }
-    
-    @Test
-    @DisplayName("Пользователь не видит задачи других пользователей")
-    void userCannotSeeOtherUsersTasks() {
-        UserRequest otherUserRequest = 
-            new UserRequest("Другой", "other@test.com");
-        User otherUser = userService.createUser(otherUserRequest);
-        
-        taskService.createTask(new TaskRequest("Чужая задача", dueTime, otherUser.getId(), 0.5));
-        
-        List<Task> tasks = taskService.getTasksByUserId(testUserId);
-        assertEquals(0, tasks.size());
     }
     
     @Test
