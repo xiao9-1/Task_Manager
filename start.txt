@@ -1,0 +1,19 @@
+1) Запуск docker
+
+docker run --name task_manager_postgres \
+  -e POSTGRES_USER=taskuser \
+  -e POSTGRES_PASSWORD=taskpass \
+  -e POSTGRES_DB=taskmanager \
+  -p 5433:5432 \
+  -d postgres:17
+
+
+2) Запуск приложения из директории проекта
+
+./gradlew bootRun
+
+
+3) Доступ к БД через терминал
+
+docker exec -it task_manager_postgres psql -U taskuser -d taskmanager
+
