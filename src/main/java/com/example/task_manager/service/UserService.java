@@ -1,26 +1,32 @@
 package com.example.task_manager.service;
 
 import com.example.task_manager.model.User;
+import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.dto.UserRequest;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.utils.EmailValidator;
+
+import jakarta.transaction.Transactional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
+//@Transactional
 public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
+    private final TaskRepository taskRepository;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, TaskRepository taskRepository) {
         this.userRepository = userRepository;
+        this.taskRepository = taskRepository;
     }
 
     public List<User> getAllUsers() {
@@ -72,12 +78,15 @@ public class UserService {
         return savedUser;
     }
 
-    public void updateTopStatus(Long userId, Map<Long, Task> tasks) {
+    @Transactional
+    public void updateTopStatus(Long userId) {
         log.info("Обновление TOP статуса для пользователя ID={}", userId);
         
         User user = getUserById(userId);
+
+        List<Task> tasks = taskRepository.findAllByUserId(userId);
         
-        double totalRating = tasks.values().stream()
+        double totalRating = tasks.stream()
                 .filter(task -> task.getUserId() != null && task.getUserId().equals(userId))
                 .mapToDouble(Task::getRating)
                 .sum();
