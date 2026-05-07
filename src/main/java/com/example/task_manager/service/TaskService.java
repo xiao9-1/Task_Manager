@@ -5,6 +5,7 @@ import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -68,7 +69,7 @@ public class TaskService {
 
         validateRating(request.rating());
 
-        Task task = new Task(request.title(), request.dueTime(), request.userId());
+        Task task = new Task(request.title(), request.dueTime(), user);
         task.setCreatedAt(LocalDateTime.now());
 
         // Устанавливаем рейтинг (если null → 0)
@@ -90,7 +91,7 @@ public class TaskService {
         userRepository.save(user);
 
         // Обновляем TOP статус пользователя
-        userService.updateTopStatus(request.userId(), taskRepository.getTasksMap());
+        userService.updateTopStatus(request.userId());
 
         return savedTask;
 
@@ -124,7 +125,7 @@ public class TaskService {
                 id, savedTask.getDueTime(), savedTask.getRating());
 
         // Обновляем TOP статус пользователя
-        userService.updateTopStatus(request.userId(), taskRepository.getTasksMap());
+        userService.updateTopStatus(request.userId());
 
         return savedTask;
     }
@@ -149,7 +150,7 @@ public class TaskService {
             userRepository.save(user);
         });
 
-        userService.updateTopStatus(userId, taskRepository.getTasksMap());
+        userService.updateTopStatus(userId);
 
         log.info("Задача ID={} ('{}') успешно удалена", id, task.getTitle());
 
@@ -177,7 +178,7 @@ public class TaskService {
         Task savedTask = taskRepository.save(task);
 
         // Обновляем TOP статус пользователя
-        userService.updateTopStatus(task.getUserId(), taskRepository.getTasksMap());
+        userService.updateTopStatus(task.getUserId());
 
         log.info("Задача ID={} завершена, статус={}", id, savedTask.getStatus());
 
@@ -190,9 +191,9 @@ public class TaskService {
         return taskRepository.existsById(id);
     }
 
-    public Map<Long, Task> getTasksMap() {
-        return taskRepository.getTasksMap();
-    }
+    // public Map<Long, Task> getTasksMap() {
+    //     return taskRepository.getTasksMap();
+    // }
 
     // Get / все задачи пользователя
     public List<Task> getTasksByUserId(Long userId) {
