@@ -1,37 +1,52 @@
 package com.example.task_manager.model;
 
 import java.time.LocalDateTime;
+import jakarta.persistence.*;
 
+@Entity 
+@Table(name = "tasks")
 public class Task {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String title;
 
+    @Enumerated(EnumType.STRING)
     private Status status;
 
     private LocalDateTime createdAt;
-
     private LocalDateTime dueTime;
-
     private LocalDateTime completedAt;
-
-    private Long userId;
-
     private Double rating;
 
+    @Column(name = "user_id", insertable = false, updatable = false)
+    private Long userId;
+
+    // Связь с сущностью User
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    
+    public Long getUserId() {
+        return user != null ? user.getId() : null;
+    }
+
+    public Task() {}
 
     public Task(String title, LocalDateTime dueTime) {
         this.title = title;
         this.dueTime = dueTime;
         this.status = Status.PENDING;
-
     }
 
-    public Task(String title, LocalDateTime dueTime, Long userId) {
+    public Task(String title, LocalDateTime dueTime, User user) {
         this.title = title;
         this.dueTime = dueTime;
-        this.userId = userId;
+        this.user = user;
         this.status = Status.PENDING;
         this.rating = null;
     }
@@ -86,8 +101,8 @@ public class Task {
         this.completedAt = completedAt;
     }
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
     public Double getRating() {
         return rating;
@@ -96,26 +111,6 @@ public class Task {
     public void setRating(Double rating) {
         this.rating = rating;
     }
-
-    /* 
-    public void refreshStatus() {
-        LocalDateTime current = LocalDateTime.now();
-        
-        if (completedAt != null) {
-            if (completedAt.isBefore(dueTime)) {
-                status = Status.COMPLETED_ON_TIME;
-            } else {
-                status = Status.COMPLETED_LATE;
-            }
-        } else {
-            if (current.isAfter(dueTime)) {
-                status = Status.NOT_COMPLETED;
-            } else {
-                status = Status.PENDING;
-            }
-        }
-    }
-    */
 
 }
 
