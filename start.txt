@@ -12,6 +12,9 @@ docker run --name task_manager_postgres \
 
 ./gradlew bootRun
 
+2.1) Запуск с H2 базой
+
+./gradlew bootRun --args='--spring.profiles.active=dev'
 
 3) Доступ к БД через терминал
 
