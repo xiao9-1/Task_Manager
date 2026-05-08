@@ -1,7 +1,7 @@
 package com.example.task_manager.repository;
 
 import com.example.task_manager.model.User;
-import com.example.task_manager.repository.SpringDataJpaUserRepository;
+import com.example.task_manager.repository.JpaUserRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +18,7 @@ import java.util.Optional;
 public class JpaUserRepositoryTest {
 
     @Autowired
-    private SpringDataJpaUserRepository userRepository;
+    private JpaUserRepository userRepository;
 
     @Autowired
     private TestEntityManager entityManager;

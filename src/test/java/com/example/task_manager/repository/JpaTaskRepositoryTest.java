@@ -21,10 +21,10 @@ import static org.mockito.ArgumentMatchers.same;
 public class JpaTaskRepositoryTest {
 
     @Autowired
-    private SpringDataJpaTaskRepository taskRepository;
+    private JpaTaskRepository taskRepository;
 
     @Autowired
-    private SpringDataJpaUserRepository userRepository;
+    private JpaUserRepository userRepository;
 
     @Autowired
     private TestEntityManager entityManager;
