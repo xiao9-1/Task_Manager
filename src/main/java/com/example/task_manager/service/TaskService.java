@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class TaskService {
@@ -191,10 +190,6 @@ public class TaskService {
         return taskRepository.existsById(id);
     }
 
-    // public Map<Long, Task> getTasksMap() {
-    //     return taskRepository.getTasksMap();
-    // }
-
     // Get / все задачи пользователя
     public List<Task> getTasksByUserId(Long userId) {
         log.info("Запрос всех задач пользователя с Id {}", userId);
@@ -207,9 +202,9 @@ public class TaskService {
     }
 
     private void validateRating(Double rating) {
-    if (rating != null && (rating < 0.0 || rating > 1.0)) {
-        throw new IllegalArgumentException("Рейтинг должен быть числом от 0.0 до 1.0");
-    }
+        if (rating != null && (rating < 0.0 || rating > 1.0)) {
+            throw new IllegalArgumentException("Рейтинг должен быть числом от 0.0 до 1.0");
+        }
     }
 
 }

@@ -12,5 +12,4 @@ public interface TaskRepository {
     List<Task> findAllByUserId(Long userId);
     void deleteById(Long id);
     boolean existsById(Long id);
-    //void clear();
 }
