@@ -26,6 +26,7 @@ public class User {
     @Column(name = "task_count")
     private int taskCount;
 
+    @Column(name = "is_top")
     private boolean top;
 
     // Связь 1 User -> Many Tasks
