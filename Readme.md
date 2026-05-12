@@ -15,12 +15,16 @@
 ### 1. Клонировать репозиторий
 ```bash
 git clone https://github.com/xiao9-1/Task_Manager
+```
+```bash
 cd Task_Manager
 ```
 
 ### 2. Запуск PostgreSQL через Docker
 ```bash
 cd docker && docker compose up -d && cd ..
+```
+```bash
 ./gradlew bootRun
 ```
 
