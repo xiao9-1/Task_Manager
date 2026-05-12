@@ -24,6 +24,7 @@ cd Task_Manager
 ```bash
 cd docker && docker compose up -d && cd ..
 ```
+При первой инициализации будут выполнены скрипты создания DDL таблиц из  `1_create_ddl.sql` и вставки тестовых данных `2_insert.sql`
 ```bash
 ./gradlew bootRun
 ```
