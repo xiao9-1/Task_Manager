@@ -10,6 +10,13 @@ import com.example.task_manager.dto.ErrorDto;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorDto> handleAccessDenied(AccessDeniedException e) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)  // ← 403
+                .body(ErrorDto.badRequest(e.getMessage()));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorDto> handleNotFound(RuntimeException e) {
         if ((e.getMessage().contains("не найдена")) || ((e.getMessage().contains("не найден")))) {
