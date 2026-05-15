@@ -43,9 +43,13 @@ class RatingTopIntegrationTest {
     @BeforeEach
     void setUp() {
         dueTime = LocalDateTime.now().plusDays(7);
+
+        User user = new User("Тестовый пользователь", "test@test.com");
+        user.setPassword("{noop}password");
+        user.setRole("USER");
+        user = userRepository.save(user);
+        testUserId = user.getId();
         
-        UserRequest userRequest = new UserRequest("Тестовый пользователь", "test@test.com");
-        testUserId = userService.createUser(userRequest).getId();
     }
 
     @Test
@@ -113,9 +117,12 @@ class RatingTopIntegrationTest {
     @Test
     @DisplayName("Несколько пользователей имеют независимый TOP")
     void topIsIndependentForDifferentUsers() {
-        UserRequest userRequest2 = new UserRequest("Второй", "second@test.com");
-        Long secondUserId = userService.createUser(userRequest2).getId();
-        
+        User user2 = new User("Второй", "second@test.com");
+        user2.setPassword("{noop}password");
+        user2.setRole("USER");
+        user2 = userRepository.save(user2);
+        Long secondUserId = user2.getId();
+
         taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.6));
         taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.6));
         taskService.createTask(new TaskRequest("Задача 3", dueTime, secondUserId, 0.3));
