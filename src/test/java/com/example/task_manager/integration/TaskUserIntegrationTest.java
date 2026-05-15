@@ -49,9 +49,11 @@ class TaskUserIntegrationTest {
     void setUp() {
         dueTime = LocalDateTime.now().plusDays(7);
         
-        UserRequest userRequest = new UserRequest("Тестовый пользователь", "test@test.com");
-        User testUser = userService.createUser(userRequest);
-        testUserId = testUser.getId();
+        User user = new User("Тестовый пользователь", "test@test.com");
+        user.setPassword("{noop}password");
+        user.setRole("USER");
+        user = userRepository.save(user);
+        testUserId = user.getId();
     }
 
     @Test
