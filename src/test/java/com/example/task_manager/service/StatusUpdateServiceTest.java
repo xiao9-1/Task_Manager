@@ -16,7 +16,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
 
-
 @ExtendWith(MockitoExtension.class)
 @DisplayName("=======StatusUpdateServiceTest Test=======")
 class StatusUpdateServiceTest {
