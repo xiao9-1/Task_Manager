@@ -1,6 +1,9 @@
 package com.example.task_manager.controller;
+import com.example.config.TestSecurityConfig;
 import com.example.task_manager.dto.UserRequest;
 import com.example.task_manager.model.User;
+import com.example.task_manager.repository.TaskRepository;
+import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,21 +11,24 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserController.class)
+@Import(TestSecurityConfig.class)
+@ActiveProfiles("test-controller")
 @DisplayName("Тесты UserController")
 class UserControllerTest {
 
@@ -31,6 +37,12 @@ class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private UserRepository userRepository;
+
+    @MockitoBean
+    private TaskRepository taskRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -47,11 +59,15 @@ class UserControllerTest {
         testUser1.setId(1L);
         testUser1.setCreatedAt(LocalDateTime.now());
         testUser1.setTaskCount(3);
+        testUser1.setRole("ADMIN");
+
+        when(userService.getCurrentUser()).thenReturn(testUser1);
 
         testUser2 = new User("Мария", "maria@example.com");
         testUser2.setId(2L);
         testUser2.setCreatedAt(LocalDateTime.now());
         testUser2.setTaskCount(1);
+        testUser2.setRole("ADMIN");
 
         userList = Arrays.asList(testUser1, testUser2);
         testRequest = new UserRequest("Алексей", "alex@example.com");
@@ -63,12 +79,6 @@ class UserControllerTest {
         when(userService.getAllUsers()).thenReturn(userList);
 
         mockMvc.perform(get("/users"))
-                .andDo(result -> {
-                    System.out.println("=== ОТВЕТ СЕРВЕРА ===");
-                    System.out.println("Статус: " + result.getResponse().getStatus());
-                    System.out.println("Тело: " + result.getResponse().getContentAsString());
-                    System.out.println("====================");
-                })
                 .andExpect(status().isOk());
     }
 
@@ -197,6 +207,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("POST /users - null имя → 400")
+    @WithMockUser(roles = "ADMIN")
     void createUser_NullName_Returns400() throws Exception {
         UserRequest nullRequest = new UserRequest(null, "alex@example.com");
 
@@ -208,7 +219,6 @@ class UserControllerTest {
                 .content(objectMapper.writeValueAsString(nullRequest)))
                 .andExpect(status().isBadRequest());
     }
-
 
     @Test
     @DisplayName("GET /users - ответ содержит поле top")
