@@ -9,12 +9,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.context.ActiveProfiles;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Optional;
 
 @DataJpaTest
+@ActiveProfiles("test")
 public class JpaUserRepositoryTest {
 
     @Autowired
@@ -27,7 +30,12 @@ public class JpaUserRepositoryTest {
 
     @BeforeEach
     void set_up() {
+
         testUser = new User("Тестовый пользователь", "test_user@example.com");
+        testUser.setPassword("{noop}password");
+        testUser.setRole("USER");
+        //testUser = userRepository.save(testUser);
+
         testUser = entityManager.persistAndFlush(testUser);
     }
 
@@ -36,6 +44,8 @@ public class JpaUserRepositoryTest {
     void save_ShouldPersistUser() {
 
         User newUser = new User("Test", "test@example.com");
+        newUser.setPassword("{noop}password");
+        newUser.setRole("USER");
 
         User saved = userRepository.save(newUser);
 
@@ -66,9 +76,13 @@ public class JpaUserRepositoryTest {
     @DisplayName("findAll() - должен вернуть всех пользователей")
     void findAll_ShouldReturnAllUsers() {
         User newUser1 = new User("Test", "test@example.com");
+        newUser1.setPassword("password");
+        newUser1.setRole("USER");
         entityManager.persistAndFlush(newUser1);
 
         User newUser2 = new User("Test2", "test2@example.com");
+        newUser2.setPassword("password");
+        newUser2.setRole("USER");
         entityManager.persistAndFlush(newUser2);
 
         List<User> users = userRepository.findAll();

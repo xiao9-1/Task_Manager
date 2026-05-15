@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.same;
 
 @DataJpaTest
+@ActiveProfiles("test")
 public class JpaTaskRepositoryTest {
 
     @Autowired
@@ -34,8 +36,11 @@ public class JpaTaskRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        testUser = new User("Тестовый пользователь", "taskuser@example.com");
+        testUser = new User("Тестовый пользователь", "test@test.com");
+        testUser.setPassword("{noop}password");
+        testUser.setRole("USER");
         testUser = userRepository.save(testUser);
+        //Long testUserId = testUser.getId();
 
         testTask = new Task("Тестовая задача", LocalDateTime.now().plusDays(7), testUser);
         testTask.setRating(0.7);
