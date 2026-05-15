@@ -1,19 +1,22 @@
 package com.example.task_manager.controller;
 
+import com.example.config.TestSecurityConfig;
 import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
+import com.example.task_manager.model.User;
 import com.example.task_manager.service.TaskService;
-
+import com.example.task_manager.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,8 +30,11 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.springframework.security.test.context.support.WithMockUser;
 
 @WebMvcTest(TaskController.class)
+@Import(TestSecurityConfig.class)
+@ActiveProfiles("test-controller")
 @DisplayName("Тесты TaskController")
 class TaskControllerTest {
     @Autowired
@@ -36,6 +42,9 @@ class TaskControllerTest {
 
     @MockitoBean
     private TaskService taskService;
+
+    @MockitoBean
+    private UserService userService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -47,6 +56,11 @@ class TaskControllerTest {
     @BeforeEach
     void setUp() {
         dueTime = LocalDateTime.now().plusDays(1);
+
+        User mockUser = new User("Admin", "admin@test.com");
+        mockUser.setId(1L);
+        mockUser.setRole("ADMIN");
+        when(userService.getCurrentUser()).thenReturn(mockUser);
 
         testTask = new Task("Купить молоко", dueTime);
         testTask.setId(1L);
@@ -137,6 +151,7 @@ class TaskControllerTest {
     @Test
     @DisplayName("PUT /tasks/1 - успешное обновление - 200 OK")
     void updateTask_ValidData_Returns200() throws Exception {
+        when(taskService.getTaskById(1L)).thenReturn(testTask);
         when(taskService.updateTask(eq(1L), any(TaskRequest.class))).thenReturn(testTask);
 
         mockMvc.perform(put("/tasks/1")
@@ -151,7 +166,8 @@ class TaskControllerTest {
     @Test
     @DisplayName("PUT /tasks/999 - несуществующая задача - 404 Not Found")
     void updateTask_NonExistingId_Returns404() throws Exception {
-        when(taskService.updateTask(eq(999L), any(TaskRequest.class))).thenReturn(null);
+        when(taskService.getTaskById(999L))
+        .thenThrow(new RuntimeException("Задача с ID 999 не найдена"));
 
         mockMvc.perform(put("/tasks/999")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -162,7 +178,7 @@ class TaskControllerTest {
     @Test
     @DisplayName("DELETE /tasks/1 - успешное удаление - 204 No Content")
     void deleteTask_ExistingId_Returns204() throws Exception {
-        when(taskService.deleteTask(1L)).thenReturn(true);
+        when(taskService.getTaskById(1L)).thenReturn(testTask);
 
         mockMvc.perform(delete("/tasks/1"))
                 .andExpect(status().isNoContent());
@@ -172,7 +188,10 @@ class TaskControllerTest {
 
     @Test
     @DisplayName("DELETE /tasks/999 - несуществующая задача - 404 Not Found")
+    @WithMockUser(username = "admin@test.com", roles = "ADMIN")
     void deleteTask_NonExistingId_Returns404() throws Exception {
+        when(taskService.getTaskById(999L))
+        .thenThrow(new RuntimeException("Задача с ID 999 не найдена"));
         when(taskService.deleteTask(999L)).thenReturn(false);
 
         mockMvc.perform(delete("/tasks/999"))
@@ -228,7 +247,10 @@ class TaskControllerTest {
 
     @Test
     @DisplayName("POST /tasks/{id}/complete - меняет статус")
+    @WithMockUser(username = "admin@test.com", roles = "ADMIN")
     void completeTask_ChangesTaskStatus() throws Exception {
+
+        when(taskService.getTaskById(1L)).thenReturn(testTask);
 
         Task completedTask = new Task(
             "Задача 1",
