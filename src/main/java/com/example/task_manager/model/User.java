@@ -33,8 +33,13 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Task> tasks = new ArrayList<>();
 
-    public User() {}
+    @Column(nullable = false)
+    private String role = "User";
 
+    @Column(nullable = false)
+    private String password;
+
+    public User() {}
 
     public User(String name, String email) {
         this.name = name;
@@ -92,6 +97,14 @@ public class User {
         this.top = top;
     }
 
-    
-    
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 }
