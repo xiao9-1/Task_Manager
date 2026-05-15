@@ -11,6 +11,7 @@ import jakarta.transaction.Transactional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -103,5 +104,11 @@ public class UserService {
             log.debug("TOP статус пользователя ID={} не изменился: {} (сумма рейтингов={})", 
                     userId, newTop, totalRating);
         }
+    }
+
+    public User getCurrentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
     }
 }
