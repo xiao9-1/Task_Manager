@@ -26,7 +26,7 @@ public class Task {
     private Long userId;
 
     // Связь с сущностью User
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User user;
 
