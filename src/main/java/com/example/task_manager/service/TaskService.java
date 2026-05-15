@@ -37,7 +37,7 @@ public class TaskService {
         log.debug("Найдено задач: {}", tasks.size());
         return tasks;
     }
-
+    
     // GET задача по id
     public Task getTaskById(Long id) {
         log.debug("Поиск задачи с ID: {} ", id);
