@@ -7,7 +7,7 @@ import com.example.task_manager.model.User;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
 
-
+import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,17 +15,23 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.Authenticator;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +57,8 @@ public class UserServiceTest {
         testUser = new User("Тестовый пользователь", "test@example.com");
         testUser.setId(1L);
         testUser.setTaskCount(0);
+        testUser.setRole("USER");
+        testUser.setPassword("{noop}password");
         testUserId = testUser.getId();
     }
 
@@ -275,5 +283,30 @@ public class UserServiceTest {
         assertNotNull(result);
         assertEquals("TEST@EXAMPLE.COM", result.getEmail());
         verify(userRepository, times(2)).save(any());
+    }
+
+    @Test
+    @DisplayName("getCurrentUser() - успешное получение текущего пользователя")
+    @WithMockUser(username = "currentUser@mail.ru", roles = "ADMIN")
+    void getCurrentUser_Authenticated_ReturnsUser() {
+        User currentUser = new User("currentUser", "currentUser@mail.ru");
+        currentUser.setId(1L);
+        currentUser.setRole("ADMIN");
+
+        UsernamePasswordAuthenticationToken authentication = 
+        new UsernamePasswordAuthenticationToken(
+            "currentUser@mail.ru",
+            null,
+            List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+        );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        
+        when(userRepository.findByEmail("currentUser@mail.ru")).thenReturn(Optional.of(currentUser));
+
+        User result = userService.getCurrentUser();
+        assertNotNull(result);
+        assertEquals("currentUser@mail.ru", result.getEmail());
+
     }
 }
