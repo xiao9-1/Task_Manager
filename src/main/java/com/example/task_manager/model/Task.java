@@ -22,17 +22,17 @@ public class Task {
     private LocalDateTime completedAt;
     private Double rating;
 
-    @Column(name = "user_id", insertable = false, updatable = false)
+    @Column(name = "user_id", insertable = true, updatable = false)
     private Long userId;
 
-    // Связь с сущностью User
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id")
-    private User user;
+    // // Связь с сущностью User
+    // @ManyToOne(fetch = FetchType.EAGER)
+    // @JoinColumn(name = "user_id")
+    // private User user;
 
     
     public Long getUserId() {
-        return user != null ? user.getId() : null;
+        return userId;
     }
 
     public Task() {}
@@ -43,10 +43,10 @@ public class Task {
         this.status = Status.PENDING;
     }
 
-    public Task(String title, LocalDateTime dueTime, User user) {
+    public Task(String title, LocalDateTime dueTime, Long userId) {
         this.title = title;
         this.dueTime = dueTime;
-        this.user = user;
+        this.userId = userId;
         this.status = Status.PENDING;
         this.rating = null;
     }
@@ -101,8 +101,8 @@ public class Task {
         this.completedAt = completedAt;
     }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    // public User getUser() { return user; }
+    // public void setUser(User user) { this.user = user; }
 
     public Double getRating() {
         return rating;

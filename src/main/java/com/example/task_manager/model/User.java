@@ -29,24 +29,37 @@ public class User {
     @Column(name = "is_top")
     private boolean top;
 
-    // Связь 1 User -> Many Tasks
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Task> tasks = new ArrayList<>();
+    // // Связь 1 User -> Many Tasks
+    // @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // private List<Task> tasks = new ArrayList<>();
 
     @Column(nullable = false)
-    private String role = "User";
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     @Column(nullable = false)
     private String password;
 
     public User() {}
 
+    public User(String name, String email, String password) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.createdAt = LocalDateTime.now();
+        this.taskCount = 0;
+        this.top = false;
+        this.role = Role.USER;
+    }
+
+    // Конструктор для старых тестов
     public User(String name, String email) {
         this.name = name;
         this.email = email;
         this.createdAt = LocalDateTime.now();
         this.taskCount = 0;
         this.top = false;
+        this.role = Role.USER;
     }
 
     public Long getId() {
@@ -97,11 +110,11 @@ public class User {
         this.top = top;
     }
 
-    public String getRole() {
+    public Role getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(Role role) {
         this.role = role;
     }
 
