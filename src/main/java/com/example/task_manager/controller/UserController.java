@@ -3,6 +3,7 @@ package com.example.task_manager.controller;
 import com.example.task_manager.dto.UserRequest;
 import com.example.task_manager.dto.UserResponse;
 import com.example.task_manager.exception.AccessDeniedException;
+import com.example.task_manager.model.Role;
 import com.example.task_manager.model.User;
 import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.service.UserService;
@@ -22,32 +23,22 @@ public class UserController {
 
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
-    private final UserRepository userRepository;
 
-    public UserController(UserService userService, UserRepository userRepository) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.userRepository = userRepository;
     }
 
     // Регистрация
     @PostMapping("/register")
-    public ResponseEntity<String> register(
-            @RequestParam String name, 
-            @RequestParam String email, 
-            @RequestParam String password) {
-        
-        log.info("POST /users/register - регистрация: name={}, email={}", name, email);
-        
-        if (userRepository.findByEmail(email).isPresent()) {
-            return ResponseEntity.badRequest().body("Пользователь с таким email уже существует");
-        }
-        
-        User user = new User(name, email);
-        user.setPassword("{noop}" + password);
-        user.setRole("USER");
-        userRepository.save(user);
-        
-        return ResponseEntity.ok("Пользователь зарегистрирован. Теперь вы можете войти: /login");
+    public ResponseEntity<UserResponse> register(@RequestBody UserRequest request) {
+
+        log.info("Регистрация пользователя: {}", request.email());
+
+        User user = userService.createUser(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(UserResponse.from(user));
     }
 
     // Переход на страницу пользователя
@@ -96,7 +87,7 @@ public class UserController {
         log.debug("Текущий пользователь: ID={}, role={}, email={}", 
                   currentUser.getId(), currentUser.getRole(), currentUser.getEmail());
         
-        if ("ADMIN".equals(currentUser.getRole())) {
+        if (Role.ADMIN.equals(currentUser.getRole())) {
             log.info("ADMIN {} создает пользователя", currentUser.getEmail());
         } else {
             log.warn("Доступ запрещён: USER {} не может создавать других пользователей", 
