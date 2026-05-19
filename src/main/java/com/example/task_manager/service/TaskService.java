@@ -68,7 +68,7 @@ public class TaskService {
 
         validateRating(request.rating());
 
-        Task task = new Task(request.title(), request.dueTime(), user);
+        Task task = new Task(request.title(), request.dueTime(), request.userId());
         task.setCreatedAt(LocalDateTime.now());
 
         // Устанавливаем рейтинг (если null → 0)

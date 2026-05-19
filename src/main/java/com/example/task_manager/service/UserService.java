@@ -4,6 +4,7 @@ import com.example.task_manager.model.User;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.dto.UserRequest;
+import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.utils.EmailValidator;
 
@@ -69,7 +70,8 @@ public class UserService {
             throw new IllegalArgumentException("Пользователь с такой почтой уже существует.");
         }
 
-        User user = new User(request.name(), request.email());
+        User user = new User(request.name(), request.email(), request.password());
+        user.setRole(Role.USER);
         User savedUser = userRepository.save(user);
         
         log.info("Пользователь успешно создан: ID={}, name='{}', email='{}', createdAt={}, taskCount={}, top={}", 
@@ -112,3 +114,4 @@ public class UserService {
             .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
     }
 }
+
