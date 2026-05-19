@@ -28,8 +28,8 @@ public class UserSecurityService implements UserDetailsService{
 
         return new org.springframework.security.core.userdetails.User(
             user.getEmail(),
-            "{noop}" + user.getPassword(),
-            Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+            user.getPassword(),
+            Collections.singletonList(new SimpleGrantedAuthority(user.getRole().getAuthority()))
         );
         
     }
