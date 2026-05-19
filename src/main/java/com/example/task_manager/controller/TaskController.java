@@ -3,6 +3,7 @@ package com.example.task_manager.controller;
 import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.dto.TaskResponse;
 import com.example.task_manager.exception.AccessDeniedException;
+import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
 import com.example.task_manager.service.TaskService;
@@ -42,7 +43,7 @@ public class TaskController {
                   currentUser.getId(), currentUser.getRole(), currentUser.getEmail());
 
         List<Task> tasks;
-        if ("ADMIN".equals(currentUser.getRole())) {
+        if (Role.ADMIN.equals(currentUser.getRole())) {
             log.info("ADMIN {} запрашивает все задачи", currentUser.getEmail());
             tasks = taskService.getAllTasks();
         } else {
@@ -67,7 +68,7 @@ public class TaskController {
         Task task = taskService.getTaskById(id);
         log.debug("Найдена задача: ID={}, userId={}, title={}", task.getId(), task.getUserId(), task.getTitle());
 
-        if (!"ADMIN".equals(currentUser.getRole()) && !task.getUserId().equals(currentUser.getId())) {
+        if (!Role.ADMIN.equals(currentUser.getRole()) && !task.getUserId().equals(currentUser.getId())) {
             log.warn("Доступ запрещён: USER {} пытается получить задачу ID={}, принадлежащую пользователю ID={}", 
                      currentUser.getEmail(), id, task.getUserId());
             throw new AccessDeniedException("Доступ запрещён. Это не ваша задача");
@@ -87,7 +88,7 @@ public class TaskController {
         log.debug("Текущий пользователь: ID={}, role={}, email={}", 
                   currentUser.getId(), currentUser.getRole(), currentUser.getEmail());
         Long targetUserId = request.userId();
-        if (!"ADMIN".equals(currentUser.getRole()) && !currentUser.getId().equals(targetUserId)) {
+        if (!Role.ADMIN.equals(currentUser.getRole()) && !currentUser.getId().equals(targetUserId)) {
             log.warn("Доступ запрещён: USER {} пытается создать задачу для пользователя ID={}", 
                      currentUser.getEmail(), targetUserId);
             throw new AccessDeniedException("Доступ запрещён. Нельзя создавать задачи для других пользователей");
@@ -111,7 +112,7 @@ public class TaskController {
         Task task = taskService.getTaskById(id);
         log.debug("Завершаемая задача: ID={}, userId={}, title={}", task.getId(), task.getUserId(), task.getTitle());
         
-        if (!"ADMIN".equals(currentUser.getRole()) && !task.getUserId().equals(currentUser.getId())) {
+        if (!Role.ADMIN.equals(currentUser.getRole()) && !task.getUserId().equals(currentUser.getId())) {
             log.warn("Доступ запрещён: USER {} пытается завершить задачу ID={}, принадлежащую пользователю ID={}", 
                      currentUser.getEmail(), id, task.getUserId());
             throw new AccessDeniedException("Доступ запрещён. Это не ваша задача");
@@ -136,7 +137,7 @@ public class TaskController {
         Task task = taskService.getTaskById(id);
         log.debug("Обновляемая задача: ID={}, userId={}, title={}", task.getId(), task.getUserId(), task.getTitle());
         
-        if (!"ADMIN".equals(currentUser.getRole()) && !task.getUserId().equals(currentUser.getId())) {
+        if (!Role.ADMIN.equals(currentUser.getRole()) && !task.getUserId().equals(currentUser.getId())) {
             log.warn("Доступ запрещён: USER {} пытается обновить задачу ID={}, принадлежащую пользователю ID={}", 
                      currentUser.getEmail(), id, task.getUserId());
             throw new AccessDeniedException("Доступ запрещён. Это не ваша задача");
@@ -161,7 +162,7 @@ public class TaskController {
         Task task = taskService.getTaskById(id);
         log.debug("Удаляемая задача: ID={}, userId={}, title={}", task.getId(), task.getUserId(), task.getTitle());
         
-        if (!"ADMIN".equals(currentUser.getRole()) && !task.getUserId().equals(currentUser.getId())) {
+        if (!Role.ADMIN.equals(currentUser.getRole()) && !task.getUserId().equals(currentUser.getId())) {
             log.warn("Доступ запрещён: USER {} пытается удалить задачу ID={}, принадлежащую пользователю ID={}", 
                      currentUser.getEmail(), id, task.getUserId());
             throw new AccessDeniedException("Доступ запрещён. Это не ваша задача");
@@ -183,7 +184,7 @@ public class TaskController {
         log.debug("Текущий пользователь: ID={}, role={}, email={}", 
                   currentUser.getId(), currentUser.getRole(), currentUser.getEmail());
         
-        if ("ADMIN".equals(currentUser.getRole())) {
+        if (Role.ADMIN.equals(currentUser.getRole())) {
             log.info("ADMIN {} запрашивает задачи пользователя ID={}", currentUser.getEmail(), userId);
         } else {
             log.info("USER {} запрашивает задачи", currentUser.getEmail());
