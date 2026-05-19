@@ -59,7 +59,7 @@ class TaskServiceTest {
 
         validRequest = new TaskRequest("Task 1", dueTime, testUserId, 0.0);
 
-        mockTask = new Task("Task 1", dueTime, mockUser);
+        mockTask = new Task("Task 1", dueTime, mockUser.getId());
         mockTask.setId(1L);
         mockTask.setStatus(Status.PENDING);
         mockTask.setRating(0.0);

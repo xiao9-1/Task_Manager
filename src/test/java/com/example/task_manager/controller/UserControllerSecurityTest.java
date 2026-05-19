@@ -2,6 +2,7 @@ package com.example.task_manager.controller;
 
 import com.example.config.TestSecurityConfig;
 import com.example.task_manager.dto.UserRequest;
+import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
 import com.example.task_manager.repository.UserRepository;
@@ -61,12 +62,12 @@ public class UserControllerSecurityTest {
         // Обычный пользователь
         testUser = new User("Test User", "user@test.com");
         testUser.setId(1L);
-        testUser.setRole("USER");
+        testUser.setRole(Role.USER);
         
         // Админ
         adminUser = new User("Admin", "admin@test.com");
         adminUser.setId(2L);
-        adminUser.setRole("ADMIN");
+        adminUser.setRole(Role.ADMIN);
         
         when(userService.getCurrentUser()).thenReturn(testUser);
     }
@@ -120,7 +121,7 @@ public class UserControllerSecurityTest {
 
         User otherUser = new User("Other user", "otherUser@mail.ru");
         otherUser.setId(2L);
-        otherUser.setRole("USER");
+        otherUser.setRole(Role.USER);
         
         when(userService.getUserById(2L)).thenReturn(otherUser);
         
@@ -146,7 +147,7 @@ public class UserControllerSecurityTest {
     @DisplayName("POST /users - USER не может создать нового пользователя -> 403")
     @WithMockUser(username = "user@test.com", roles = "USER")
     void user_CannotCreateUser_Returns403() throws Exception {
-        UserRequest request = new UserRequest("New User", "new@test.com");
+        UserRequest request = new UserRequest("New User", "new@test.com", "123");
         
         mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -162,7 +163,7 @@ public class UserControllerSecurityTest {
     void getCurrentUser_ReturnsCurrentUser() throws Exception {
         User currentUser = new User("Current User", "user@test.com");
         currentUser.setId(1L);
-        currentUser.setRole("USER");
+        currentUser.setRole(Role.USER);
         
         when(userService.getCurrentUser()).thenReturn(currentUser);
         

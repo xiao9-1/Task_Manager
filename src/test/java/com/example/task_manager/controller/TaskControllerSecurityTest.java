@@ -2,6 +2,7 @@ package com.example.task_manager.controller;
 
 import com.example.config.TestSecurityConfig;
 import com.example.task_manager.dto.TaskRequest;
+import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
@@ -56,13 +57,13 @@ public class TaskControllerSecurityTest {
     void setUp() {
         testUser = new User("Test User", "user@test.com");
         testUser.setId(1L);
-        testUser.setRole("USER");
+        testUser.setRole(Role.USER);
         
         when(userService.getCurrentUser()).thenReturn(testUser);
 
-        userTask = new Task("Task1", LocalDateTime.now().plusDays(7));
+        userTask = new Task("Task1", LocalDateTime.now().plusDays(7), 1L);
         userTask.setId(2L);
-        userTask.setUser(testUser);
+        //userTask.setUser(testUser);
     }
 
     @Test
@@ -89,7 +90,7 @@ public class TaskControllerSecurityTest {
     void admin_GetAllUsers_Returns200() throws Exception {
 
         User admin = new User("Admin", "admin@test.com");
-        admin.setRole("ADMIN");
+        admin.setRole(Role.ADMIN);
         when(userService.getCurrentUser()).thenReturn(admin);
         
         when(taskService.getAllTasks()).thenReturn(List.of());
@@ -103,11 +104,11 @@ public class TaskControllerSecurityTest {
     void user_GetOtherUsersTask_Returns403() throws Exception {    
         User otherUser = new User("Other User", "other@test.com");
         otherUser.setId(2L);
-        otherUser.setRole("USER");
+        otherUser.setRole(Role.USER);
         
-        Task otherTask = new Task("Чужая задача", LocalDateTime.now().plusDays(7));
+        Task otherTask = new Task("Чужая задача", LocalDateTime.now().plusDays(7), 999L);
         otherTask.setId(999L);
-        otherTask.setUser(otherUser);
+        //otherTask.setUser(otherUser);
         otherTask.setStatus(Status.PENDING);
         
         when(taskService.getTaskById(999L)).thenReturn(otherTask);
@@ -122,7 +123,7 @@ public class TaskControllerSecurityTest {
     void admin_GetAnyTask_Returns200() throws Exception {
 
         User admin = new User("Admin", "admin@test.com");
-        admin.setRole("ADMIN");
+        admin.setRole(Role.ADMIN);
 
         when(userService.getCurrentUser()).thenReturn(admin);
         when(taskService.getTaskById(2L)).thenReturn(userTask);
@@ -197,9 +198,9 @@ public class TaskControllerSecurityTest {
         User otherUser = new User("Other", "other@test.com");
         otherUser.setId(2L);
         
-        Task otherTask = new Task("Чужая задача", LocalDateTime.now().plusDays(7));
+        Task otherTask = new Task("Чужая задача", LocalDateTime.now().plusDays(7), 999L);
         otherTask.setId(999L);
-        otherTask.setUser(otherUser);
+        //otherTask.setUser(otherUser);
         
         when(taskService.getTaskById(999L)).thenReturn(otherTask);
         
@@ -233,9 +234,9 @@ public class TaskControllerSecurityTest {
         User otherUser = new User("Other", "other@test.com");
         otherUser.setId(2L);
         
-        Task otherTask = new Task("Чужая задача", LocalDateTime.now().plusDays(7));
+        Task otherTask = new Task("Чужая задача", LocalDateTime.now().plusDays(7), 999L);
         otherTask.setId(999L);
-        otherTask.setUser(otherUser);
+        //otherTask.setUser(otherUser);
         
         when(taskService.getTaskById(999L)).thenReturn(otherTask);
         
@@ -251,7 +252,7 @@ public class TaskControllerSecurityTest {
     void user_CompleteOwnTask_Returns200() throws Exception {
         Task completedTask = new Task("Task1", LocalDateTime.now().plusDays(7));
         completedTask.setId(2L);
-        completedTask.setUser(testUser);
+        //completedTask.setUser(testUser);
         completedTask.setStatus(Status.COMPLETED_ON_TIME);
         completedTask.setCompletedAt(LocalDateTime.now());
         
@@ -272,9 +273,9 @@ public class TaskControllerSecurityTest {
         User otherUser = new User("Other", "other@test.com");
         otherUser.setId(2L);
         
-        Task otherTask = new Task("Чужая задача", LocalDateTime.now().plusDays(7));
+        Task otherTask = new Task("Чужая задача", LocalDateTime.now().plusDays(7), 999L);
         otherTask.setId(999L);
-        otherTask.setUser(otherUser);
+        //otherTask.setUser(otherUser);
         
         when(taskService.getTaskById(999L)).thenReturn(otherTask);
         

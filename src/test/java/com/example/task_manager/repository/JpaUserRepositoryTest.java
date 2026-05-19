@@ -1,5 +1,6 @@
 package com.example.task_manager.repository;
 
+import com.example.task_manager.model.Role;
 import com.example.task_manager.model.User;
 import com.example.task_manager.repository.UserRepository;
 
@@ -33,7 +34,7 @@ public class JpaUserRepositoryTest {
 
         testUser = new User("Тестовый пользователь", "test_user@example.com");
         testUser.setPassword("{noop}password");
-        testUser.setRole("USER");
+        testUser.setRole(Role.USER);
         //testUser = userRepository.save(testUser);
 
         testUser = entityManager.persistAndFlush(testUser);
@@ -45,7 +46,7 @@ public class JpaUserRepositoryTest {
 
         User newUser = new User("Test", "test@example.com");
         newUser.setPassword("{noop}password");
-        newUser.setRole("USER");
+        newUser.setRole(Role.USER);
 
         User saved = userRepository.save(newUser);
 
@@ -77,12 +78,12 @@ public class JpaUserRepositoryTest {
     void findAll_ShouldReturnAllUsers() {
         User newUser1 = new User("Test", "test@example.com");
         newUser1.setPassword("password");
-        newUser1.setRole("USER");
+        newUser1.setRole(Role.USER);
         entityManager.persistAndFlush(newUser1);
 
         User newUser2 = new User("Test2", "test2@example.com");
         newUser2.setPassword("password");
-        newUser2.setRole("USER");
+        newUser2.setRole(Role.USER);
         entityManager.persistAndFlush(newUser2);
 
         List<User> users = userRepository.findAll();

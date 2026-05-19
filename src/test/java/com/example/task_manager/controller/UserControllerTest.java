@@ -1,6 +1,7 @@
 package com.example.task_manager.controller;
 import com.example.config.TestSecurityConfig;
 import com.example.task_manager.dto.UserRequest;
+import com.example.task_manager.model.Role;
 import com.example.task_manager.model.User;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
@@ -59,7 +60,7 @@ class UserControllerTest {
         testUser1.setId(1L);
         testUser1.setCreatedAt(LocalDateTime.now());
         testUser1.setTaskCount(3);
-        testUser1.setRole("ADMIN");
+        testUser1.setRole(Role.ADMIN);
 
         when(userService.getCurrentUser()).thenReturn(testUser1);
 
@@ -67,10 +68,10 @@ class UserControllerTest {
         testUser2.setId(2L);
         testUser2.setCreatedAt(LocalDateTime.now());
         testUser2.setTaskCount(1);
-        testUser2.setRole("ADMIN");
+        testUser2.setRole(Role.ADMIN);
 
         userList = Arrays.asList(testUser1, testUser2);
-        testRequest = new UserRequest("Алексей", "alex@example.com");
+        testRequest = new UserRequest("Алексей", "alex@example.com", "123");
     }
 
     @Test
@@ -178,7 +179,7 @@ class UserControllerTest {
     @Test
     @DisplayName("POST /users - пустое имя → 400")
     void createUser_EmptyName_Returns400() throws Exception {
-        UserRequest emptyRequest = new UserRequest("", "alex@example.com");
+        UserRequest emptyRequest = new UserRequest("", "alex@example.com", "123");
 
         when(userService.createUser(any(UserRequest.class)))
                 .thenThrow(new IllegalArgumentException("Имя пользователя не может быть пустым"));
@@ -193,7 +194,7 @@ class UserControllerTest {
     @Test
     @DisplayName("POST /users - пустой email → 400")
     void createUser_EmptyEmail_Returns400() throws Exception {
-        UserRequest emptyRequest = new UserRequest("Алексей", "");
+        UserRequest emptyRequest = new UserRequest("Алексей", "alex@example.com", "123");
 
         when(userService.createUser(any(UserRequest.class)))
                 .thenThrow(new IllegalArgumentException("Email не может быть пустым"));
@@ -209,7 +210,7 @@ class UserControllerTest {
     @DisplayName("POST /users - null имя → 400")
     @WithMockUser(roles = "ADMIN")
     void createUser_NullName_Returns400() throws Exception {
-        UserRequest nullRequest = new UserRequest(null, "alex@example.com");
+        UserRequest nullRequest = new UserRequest(null, "alex@example.com", "123");
 
         when(userService.createUser(any(UserRequest.class)))
                 .thenThrow(new IllegalArgumentException("Имя пользователя не может быть пустым"));

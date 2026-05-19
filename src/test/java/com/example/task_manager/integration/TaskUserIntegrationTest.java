@@ -2,6 +2,7 @@ package com.example.task_manager.integration;
 
 import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.dto.UserRequest;
+import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
@@ -51,7 +52,7 @@ class TaskUserIntegrationTest {
         
         User user = new User("Тестовый пользователь", "test@test.com");
         user.setPassword("{noop}password");
-        user.setRole("USER");
+        user.setRole(Role.USER);
         user = userRepository.save(user);
         testUserId = user.getId();
     }

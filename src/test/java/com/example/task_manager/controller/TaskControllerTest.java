@@ -2,6 +2,7 @@ package com.example.task_manager.controller;
 
 import com.example.config.TestSecurityConfig;
 import com.example.task_manager.dto.TaskRequest;
+import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
@@ -59,7 +60,7 @@ class TaskControllerTest {
 
         User mockUser = new User("Admin", "admin@test.com");
         mockUser.setId(1L);
-        mockUser.setRole("ADMIN");
+        mockUser.setRole(Role.ADMIN);
         when(userService.getCurrentUser()).thenReturn(mockUser);
 
         testTask = new Task("Купить молоко", dueTime);

@@ -1,5 +1,6 @@
 package com.example.task_manager.repository;
 
+import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
@@ -38,11 +39,11 @@ public class JpaTaskRepositoryTest {
     void setUp() {
         testUser = new User("Тестовый пользователь", "test@test.com");
         testUser.setPassword("{noop}password");
-        testUser.setRole("USER");
+        testUser.setRole(Role.USER);
         testUser = userRepository.save(testUser);
         //Long testUserId = testUser.getId();
 
-        testTask = new Task("Тестовая задача", LocalDateTime.now().plusDays(7), testUser);
+        testTask = new Task("Тестовая задача", LocalDateTime.now().plusDays(7), testUser.getId());
         testTask.setRating(0.7);
         testTask = taskRepository.save(testTask);
     }
@@ -50,7 +51,7 @@ public class JpaTaskRepositoryTest {
     @Test
     @DisplayName("save() - должен сохранить задачу")
     void save_ShouldPersistTask() {
-        Task newTask = new Task("new task", LocalDateTime.now().plusDays(3), testUser);
+        Task newTask = new Task("new task", LocalDateTime.now().plusDays(3), testUser.getId());
 
         Task savedTask = taskRepository.save(newTask);
 
@@ -72,10 +73,10 @@ public class JpaTaskRepositoryTest {
     @Test
     @DisplayName("findAll() - должен вернуть все задачи")
     void findAll_ShouldReturnAllTasks() {
-        Task newTask1 = new Task("new task1", LocalDateTime.now().plusDays(3), testUser);
+        Task newTask1 = new Task("new task1", LocalDateTime.now().plusDays(3), testUser.getId());
         entityManager.persistAndFlush(newTask1);
 
-        Task newTask2 = new Task("new task2", LocalDateTime.now().plusDays(3), testUser);
+        Task newTask2 = new Task("new task2", LocalDateTime.now().plusDays(3), testUser.getId());
         entityManager.persistAndFlush(newTask2);
 
         List<Task> tasks = taskRepository.findAll();
@@ -88,10 +89,10 @@ public class JpaTaskRepositoryTest {
     @Test
     @DisplayName("findAllByUserId() - должен вернуть все задачи пользователя")
     void findAllByUserId_ShouldReturnUserAllTasks() {
-        Task newTask1 = new Task("new task1", LocalDateTime.now().plusDays(3), testUser);
+        Task newTask1 = new Task("new task1", LocalDateTime.now().plusDays(3), testUser.getId());
         entityManager.persistAndFlush(newTask1);
 
-        Task newTask2 = new Task("new task2", LocalDateTime.now().plusDays(3), testUser);
+        Task newTask2 = new Task("new task2", LocalDateTime.now().plusDays(3), testUser.getId());
         entityManager.persistAndFlush(newTask2);
 
         List<Task> allUserTasks = taskRepository.findAllByUserId(testUser.getId());

@@ -1,6 +1,7 @@
 package com.example.task_manager.service;
 
 import com.example.task_manager.dto.UserRequest;
+import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
 
@@ -57,7 +58,7 @@ public class UserServiceTest {
         testUser = new User("Тестовый пользователь", "test@example.com");
         testUser.setId(1L);
         testUser.setTaskCount(0);
-        testUser.setRole("USER");
+        testUser.setRole(Role.USER);
         testUser.setPassword("{noop}password");
         testUserId = testUser.getId();
     }
@@ -65,7 +66,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("createUser() - успешное создание пользователя")
     void createUser_ValidData_ReturnUser() {
-        UserRequest request = new UserRequest("Ivan", "ivan@example.com");
+        UserRequest request = new UserRequest("Ivan", "ivan@example.com", "123");
         User expectedUser = new User("Ivan", "ivan@example.com");
         expectedUser.setId(2L);
         expectedUser.setTaskCount(0);
@@ -87,7 +88,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("createUser() - пустое имя")
     void createUser_EmptyName_ThrowsException() {
-        UserRequest request = new UserRequest("", "mail");
+        UserRequest request = new UserRequest("", "mail", "123");
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
@@ -101,7 +102,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("createUser() - имя из пробелов")
     void createUser_BlankName_ThrowsException() {
-        UserRequest request = new UserRequest("   ", "mail");
+        UserRequest request = new UserRequest("   ", "mail", "123");
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -114,7 +115,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("createUser() - имя null")
     void createUser_NullName_ThrowsException() {
-        UserRequest request = new UserRequest(null, "mail");
+        UserRequest request = new UserRequest(null, "mail", "123");
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -200,7 +201,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("updateTopStatus() - сумма рейтингов = 1 → top = true")
     void updateTopStatus_TotalRatingOne_SetsTopTrue() {
-        Task task = new Task("Задача", LocalDateTime.now().plusDays(7), testUser);
+        Task task = new Task("Задача", LocalDateTime.now().plusDays(7), testUser.getId());
         task.setRating(1.0);
         
         testUser.setTop(false);
@@ -217,7 +218,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("updateTopStatus() - сумма рейтингов < 1 → top = false")
     void updateTopStatus_TotalRatingLessThanOne_SetsTopFalse() {
-        Task task = new Task("Задача", LocalDateTime.now().plusDays(7), testUser);
+        Task task = new Task("Задача", LocalDateTime.now().plusDays(7), testUser.getId());
         task.setRating(0.5);
         
         testUser.setTop(true);
@@ -247,7 +248,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("createUser() - email уже существует → исключение")
     void createUser_DuplicateEmail_ThrowsException() {
-        UserRequest duplicateRequest = new UserRequest("Другой пользователь", "test@example.com");
+        UserRequest duplicateRequest = new UserRequest("Другой пользователь", "test@example.com", "123");
         
         when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
         
@@ -263,11 +264,11 @@ public class UserServiceTest {
     @Test
     @DisplayName("createUser() - email с разным регистром НЕ считается дубликатом (текущее поведение)")
     void createUser_EmailCaseInsensitive_DoesNotThrowException_WithCurrentBehavior() {
-        UserRequest firstRequest = new UserRequest("Первый", "test@example.com");
+        UserRequest firstRequest = new UserRequest("Первый", "test@example.com", "123");
         User firstUser = new User("Первый", "test@example.com");
         firstUser.setId(2L);
         
-        UserRequest secondRequest = new UserRequest("Другой", "TEST@EXAMPLE.COM");
+        UserRequest secondRequest = new UserRequest("Другой", "TEST@EXAMPLE.COM", "123");
         User secondUser = new User("Другой", "TEST@EXAMPLE.COM");
         secondUser.setId(3L);
         
@@ -291,7 +292,7 @@ public class UserServiceTest {
     void getCurrentUser_Authenticated_ReturnsUser() {
         User currentUser = new User("currentUser", "currentUser@mail.ru");
         currentUser.setId(1L);
-        currentUser.setRole("ADMIN");
+        currentUser.setRole(Role.ADMIN);
 
         UsernamePasswordAuthenticationToken authentication = 
         new UsernamePasswordAuthenticationToken(

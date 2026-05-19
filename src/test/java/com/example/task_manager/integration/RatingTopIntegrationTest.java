@@ -1,6 +1,7 @@
 package com.example.task_manager.integration;
 
 import com.example.task_manager.dto.TaskRequest;
+import com.example.task_manager.model.Role;
 import com.example.task_manager.model.User;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
@@ -46,7 +47,7 @@ class RatingTopIntegrationTest {
 
         User user = new User("Тестовый пользователь", "test@test.com");
         user.setPassword("{noop}password");
-        user.setRole("USER");
+        user.setRole(Role.USER);
         user = userRepository.save(user);
         testUserId = user.getId();
         
@@ -119,7 +120,7 @@ class RatingTopIntegrationTest {
     void topIsIndependentForDifferentUsers() {
         User user2 = new User("Второй", "second@test.com");
         user2.setPassword("{noop}password");
-        user2.setRole("USER");
+        user2.setRole(Role.USER);
         user2 = userRepository.save(user2);
         Long secondUserId = user2.getId();
 
