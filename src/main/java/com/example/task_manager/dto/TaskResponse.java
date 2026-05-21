@@ -12,7 +12,7 @@ public record TaskResponse(
     LocalDateTime dueTime, 
     LocalDateTime completedAt,
     Double rating
-) {
+) implements TaskDto {
 
     public static TaskResponse from(Task task) {
         return new TaskResponse(
