@@ -13,12 +13,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorDto> handleAccessDenied(AccessDeniedException e) {
         return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)  // ← 403
-                .body(ErrorDto.badRequest(e.getMessage()));
+                .status(HttpStatus.FORBIDDEN)
+                .body(ErrorDto.forbidden(e.getMessage()));
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorDto> handleNotFound(RuntimeException e) {
+    @ExceptionHandler(TaskNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleNotFound(TaskNotFoundException e) {
         if ((e.getMessage().contains("не найдена")) || ((e.getMessage().contains("не найден")))) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorDto.notFound(e.getMessage()));
