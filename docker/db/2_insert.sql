@@ -2,7 +2,7 @@ insert into users (name, email, password, role, created_at, task_count, is_top)
 values (
     'Admin', 
     'admin@example.com', 
-    '{noop}admin',
+    'admin',
     'ADMIN', 
     '2026-05-14 10:00:00', 
     0, 
@@ -11,9 +11,9 @@ values (
 
 insert into users (name, email, password, role, created_at, task_count, is_top)
 values
-    ('Иван Иванов', 'ivan@example.com', '{noop}ivan123', 'USER', '2026-05-12 10:30:00', 3, true),
-    ('Петр Петров', 'petr@example.com', '{noop}petr123', 'USER', '2026-05-12 11:00:00', 1, false),
-    ('Анна Смирнова', 'anna@example.com', '{noop}anna123', 'USER', '2026-05-12 12:15:00', 0, false);
+    ('Иван Иванов', 'ivan@example.com', 'ivan123', 'USER', '2026-05-12 10:30:00', 3, true),
+    ('Петр Петров', 'petr@example.com', 'petr123', 'USER', '2026-05-12 11:00:00', 1, false),
+    ('Анна Смирнова', 'anna@example.com', 'anna123', 'USER', '2026-05-12 12:15:00', 0, false);
 
 insert into tasks (title, status, created_at, due_time, completed_at, rating, user_id)
 values
