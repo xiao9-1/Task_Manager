@@ -25,11 +25,12 @@ public class Task {
     @Column(name = "user_id", insertable = true, updatable = false)
     private Long userId;
 
-    // // Связь с сущностью User
-    // @ManyToOne(fetch = FetchType.EAGER)
-    // @JoinColumn(name = "user_id")
-    // private User user;
+    private Long createdBy;
+    private Long updatedBy;
+    private Long deletedBy;
 
+    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
     
     public Long getUserId() {
         return userId;
@@ -111,6 +112,48 @@ public class Task {
     public void setRating(Double rating) {
         this.rating = rating;
     }
+
+
+    public Long getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Long createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public Long getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(Long updatedBy) {
+        this.updatedBy = updatedBy;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public Long getDeletedBy() {
+        return deletedBy;
+    }
+
+    public void setDeletedBy(Long deletedBy) {
+        this.deletedBy = deletedBy;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
 
 }
 
