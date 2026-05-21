@@ -4,6 +4,8 @@ import com.example.task_manager.model.User;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.dto.UserRequest;
+import com.example.task_manager.dto.AdminTaskResponse;
+import com.example.task_manager.dto.TaskResponse;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.utils.EmailValidator;
@@ -84,34 +86,37 @@ public class UserService {
     @Transactional
     public void updateTopStatus(Long userId) {
         log.info("Обновление TOP статуса для пользователя ID={}", userId);
-        
+
         User user = getUserById(userId);
 
         List<Task> tasks = taskRepository.findAllByUserId(userId);
-        
+
         double totalRating = tasks.stream()
-                .filter(task -> task.getUserId() != null && task.getUserId().equals(userId))
                 .mapToDouble(Task::getRating)
                 .sum();
-        
+
         boolean oldTop = user.isTop();
         boolean newTop = totalRating >= 1.0;
-        
+
         if (oldTop != newTop) {
             user.setTop(newTop);
             userRepository.save(user);
-            log.info("TOP статус пользователя ID={} изменён: {} -> {} (сумма рейтингов={})", 
-                    userId, oldTop, newTop, totalRating);
+
+            log.info("TOP статус изменён: {} -> {} (rating={})",
+                    oldTop, newTop, totalRating);
         } else {
-            log.debug("TOP статус пользователя ID={} не изменился: {} (сумма рейтингов={})", 
-                    userId, newTop, totalRating);
+            log.debug("TOP статус без изменений: {} (rating={})",
+                    newTop, totalRating);
         }
     }
 
     public User getCurrentUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        String email = SecurityContextHolder.getContext()
+            .getAuthentication()
+            .getName();
+
         return userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+            .orElseThrow(() -> new RuntimeException("User not found"));
     }
 }
 
