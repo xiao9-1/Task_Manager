@@ -1,17 +1,25 @@
 package com.example.task_manager.service;
 
+import com.example.task_manager.dto.TaskDto;
 import com.example.task_manager.dto.TaskRequest;
+import com.example.task_manager.exception.AccessDeniedException;
+import com.example.task_manager.exception.TaskNotFoundException;
+import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
+import com.example.task_manager.security.CustomUserDetails;
+import com.example.task_manager.utils.RatingValidator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class TaskService {
@@ -31,88 +39,109 @@ public class TaskService {
     }
 
     // GET все задачи
-    public List<Task> getAllTasks() {
-        log.info("Запрос всех задач");
-        List<Task> tasks = taskRepository.findAll();
-        log.debug("Найдено задач: {}", tasks.size());
-        return tasks;
-    }
+
+    // public List<Task> getAllTasks() {
+    //     log.info("Запрос всех задач");
+    //     //List<TaskDto> tasks = taskRepository.findAll()
+    //     //log.debug("Найдено задач: {}", tasks.size());
+    //     return taskRepository.findAll();
+    // }
     
     // GET задача по id
-    public Task getTaskById(Long id) {
-        log.debug("Поиск задачи с ID: {} ", id);
-        
-        return taskRepository.findById(id)
-                .map(task -> {
-                    log.info("Найдена задача: ID={}, title={}", task.getId(), task.getTitle());
-                    return task;
-                })
-                .orElseThrow(() -> {
-                    log.warn("Задача с ID {} не найдена", id);
-                    return new RuntimeException("Задача с ID " + id + " не найдена");
-                });
-    }
 
-    // POST Создать новую задачу
-    public Task createTask(TaskRequest request) {
+    // public Task getTaskById(Long id) {
+    //     log.debug("Поиск задачи с ID: {} ", id);
+    //     return taskRepository.findById(id)
+    //             .map(task -> {
+    //                 log.info("Найдена задача: ID={}, title={}", task.getId(), task.getTitle());
+    //                 return task;
+    //             })
+    //             .orElseThrow(() -> {
+    //                 log.warn("Задача с ID {} не найдена", id);
+    //                 return new RuntimeException("Задача с ID " + id + " не найдена");
+    //             });
+    // }
+
+    // POST Создать новую задачу Method updated 
+    // Если не указывается ID автора задачи, то ID присваивается текущему пользователю
+    public Task createTask(TaskRequest request, Long userId) {
+
         log.info("Запрос на создание задачи: title='{}', dueTime={}, userId={}, rating={}",
                 request.title(), request.dueTime(), request.userId(), request.rating());
-
+        
         if (request.title() == null || request.title().trim().isEmpty()) {
-            log.error("Попытка создать задачу с пустым заголовком");
             throw new IllegalArgumentException("Заголовок задачи не может быть пустым");
         }
 
-        User user = userRepository.findById(request.userId())
-                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + request.userId() + " не найден"));
+        RatingValidator.validateRating(request.rating());
 
-        validateRating(request.rating());
+        User creator = userService.getUserById(userId);
 
-        Task task = new Task(request.title(), request.dueTime(), request.userId());
-        task.setCreatedAt(LocalDateTime.now());
+        Long ownerId;
 
-        // Устанавливаем рейтинг (если null → 0)
-        if (request.rating() != null) {
-            task.setRating(request.rating());
-        } else {
-            task.setRating(0.0);
+        if (creator.getRole() == Role.ADMIN) {
+            ownerId = (request.userId() != null) ? request.userId() : creator.getId();
+        }
+        else {
+            if (request.userId() != null && !Objects.equals(request.userId(), creator.getId())) {
+                throw new AccessDeniedException("Пользователь не может создавать задачи другим пользователям");
+            }
+
+            ownerId = creator.getId();
         }
 
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new RuntimeException("Владелец задачи не найден"));
+
+        Task task = new Task(request.title(), request.dueTime(), ownerId);
+
+        task.setCreatedAt(LocalDateTime.now());
+        task.setCreatedBy(creator.getId());
+        task.setRating(request.rating() != null ? request.rating() : 0.0);
         task.setStatus(statusService.getCurrentStatus(task));
 
-        Task savedTask = taskRepository.save(task);
+        Task saved = taskRepository.save(task);
 
-        log.info("Задача успешно создана: ID={}, title={}, createdAt={}, status={}",
-                savedTask.getId(), savedTask.getTitle(), savedTask.getCreatedAt(), savedTask.getStatus());
+        owner.setTaskCount(owner.getTaskCount() + 1);
+        userRepository.save(owner);
+        userService.updateTopStatus(ownerId);
 
-        // Обновляем taskCount пользователя
-        user.setTaskCount(user.getTaskCount() + 1);
-        userRepository.save(user);
-
-        // Обновляем TOP статус пользователя
-        userService.updateTopStatus(request.userId());
-
-        return savedTask;
+        return saved;
 
     }
 
-    public Task updateTask(Long id, TaskRequest request) {
-        log.info("Обновление задачи ID={}", id);
+    // method updated 
+    public Task updateTask(Long taskId, TaskRequest request, Long requesterId, Role role) {
+        log.info("Обновление задачи ID={}", taskId);
 
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Задача с ID " + id + " не найдена"));
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new TaskNotFoundException("Задача с ID " + taskId + " не найдена"));
 
-        if (request.title() == null || request.title().trim().isEmpty()) {
-            throw new IllegalArgumentException("Заголовок задачи не может быть пустым");
+        boolean isOwner = Objects.equals(task.getUserId(), requesterId);
+
+        if (role != Role.ADMIN && !isOwner) {
+                throw new AccessDeniedException(
+                        "Пользователь может обновлять только свои задачи"
+                );
+        }
+
+        if (request.title() != null && !request.title().trim().isEmpty()) {
+            task.setTitle(request.title());
+        }
+
+        if (request.dueTime() != null) {
+            task.setDueTime(request.dueTime());
         }
 
         // Обновляем поля
         task.setTitle(request.title());
         task.setDueTime(request.dueTime());
+        task.setUpdatedAt(LocalDateTime.now());
+        task.setUpdatedBy(requesterId);
 
         // Обновляем рейтинг только если он передан
         if (request.rating() != null) {
-            validateRating(request.rating());
+            RatingValidator.validateRating(request.rating());
             task.setRating(request.rating());
         }
 
@@ -121,28 +150,36 @@ public class TaskService {
         Task savedTask = taskRepository.save(task);
 
         log.info("Задача ID={} обновлена: dueTime={}, rating={}",
-                id, savedTask.getDueTime(), savedTask.getRating());
+                taskId, savedTask.getDueTime(), savedTask.getRating());
 
         // Обновляем TOP статус пользователя
-        userService.updateTopStatus(request.userId());
+        userService.updateTopStatus(task.getUserId());
 
         return savedTask;
     }
 
     // DELETE Удалить задачу
-    public boolean deleteTask(Long id) {
-        log.info("Запрос на удаление задачи с ID={}", id);
+    public void deleteTask(Long taskId, Long requesterId, Role role) {
+        log.info("Запрос на удаление задачи с ID={}", taskId);
 
-        Task task = taskRepository.findById(id).orElse(null);
+        Task task = taskRepository.findById(taskId).orElse(null);
 
         if (task == null) {
-            log.warn("Попытка удалить несуществующую задачу с ID={}", id);
-            return false;
+            log.warn("Попытка удалить несуществующую задачу с ID={}", taskId);
+            throw new TaskNotFoundException("Задача не найдена");
+        }
+
+        boolean isOwner = Objects.equals(task.getUserId(), requesterId);
+
+        if (role != Role.ADMIN && !isOwner) {
+                throw new AccessDeniedException(
+                        "Пользователь может удалять только свои задачи"
+                );
         }
 
         Long userId = task.getUserId();
         
-        taskRepository.deleteById(id);
+        taskRepository.delete(task);
 
         userRepository.findById(userId).ifPresent(user -> {
             user.setTaskCount(Math.max(0, user.getTaskCount() - 1));
@@ -151,23 +188,25 @@ public class TaskService {
 
         userService.updateTopStatus(userId);
 
-        log.info("Задача ID={} ('{}') успешно удалена", id, task.getTitle());
+        log.info("Задача ID={} ('{}') успешно удалена", taskId, task.getTitle());
 
-        return true;
     }
 
-    public Task completeTask(Long id) {
+    public Task completeTask(Long taskId, Long userId, Role role) {
         
-        log.info("Завершение задачи ID={}", id);
+        log.info("Завершение задачи ID={}", taskId);
 
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("Задача с ID {} не найдена", id);
-                    return new RuntimeException("Задача с ID " + id + " не найдена");
-                });
+        Task task = taskRepository.findById(taskId)
+            .orElseThrow(() -> new TaskNotFoundException("Task not found"));
+
+        boolean isOwner = Objects.equals(task.getUserId(), userId);
+
+        if (role != Role.ADMIN && !isOwner) {
+            throw new AccessDeniedException("Пользователь может завершать только свои задачи");
+        }    
 
         if (task.getCompletedAt() != null) {
-            log.warn("Попытка повторного завершения задачи ID={}", id);
+            log.warn("Попытка повторного завершения задачи ID={}", taskId);
             return task;
         }
 
@@ -176,37 +215,68 @@ public class TaskService {
 
         Task savedTask = taskRepository.save(task);
 
-        // Обновляем TOP статус пользователя
         userService.updateTopStatus(task.getUserId());
 
-        log.info("Задача ID={} завершена, статус={}", id, savedTask.getStatus());
+        log.info("Задача ID={} завершена, статус={}", taskId, savedTask.getStatus());
 
         return savedTask;
     }
 
     // проверка существования задачи
-    public boolean existsById(Long id) {
-        log.debug("Проверка существования задачи ID={}", id);
-        return taskRepository.existsById(id);
-    }
+    // public boolean existsById(Long id) {
+    //     log.debug("Проверка существования задачи ID={}", id);
+    //     return taskRepository.existsById(id);
+    // }
 
     // Get / все задачи пользователя
-    public List<Task> getTasksByUserId(Long userId) {
-        log.info("Запрос всех задач пользователя с Id {}", userId);
+    // public List<Task> getTasksByUserId(Long userId) {
+    //     log.info("Запрос всех задач пользователя с Id {}", userId);
 
-        // Проверяем существование пользователя
-        userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
+    //     // Проверяем существование пользователя
+    //     userRepository.findById(userId)
+    //             .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
 
+    //     return taskRepository.findAllByUserId(userId);
+    // }
+
+
+    // new method for GET /tasks
+    public List<Task> getAllTasksForUser(Long userId, Role role) {
+        if (role == Role.ADMIN) {
+            return taskRepository.findAll();
+        }
         return taskRepository.findAllByUserId(userId);
     }
 
-    private void validateRating(Double rating) {
-        if (rating != null && (rating < 0.0 || rating > 1.0)) {
-            throw new IllegalArgumentException("Рейтинг должен быть числом от 0.0 до 1.0");
+    // new method for GET tasks/{id}
+    public Task getTaskByIdForUser(Long taskId, Long userId, Role role) {
+        Task task = taskRepository.findById(taskId).orElseThrow(() -> new TaskNotFoundException("Задача не найдена"));
+
+        if (role == Role.ADMIN) {
+            return task;
         }
+
+        if (!Objects.equals(task.getUserId(), userId)) {
+            throw new AccessDeniedException("Пользователь не может смотреть чужие задачи");
+        }
+        return task;
+
     }
 
+    // new method for GET tasks/users/{id}
+    public List<Task> getAllTasksByUserIdForUser(Long targetUserId, Long requesterId, Role role) {
+
+        if (!userRepository.existsById(targetUserId)) {
+            throw new RuntimeException("Пользователь с ID " + targetUserId + " не найден");
+        }
+
+        if (role == Role.ADMIN) {
+            return taskRepository.findAllByUserId(targetUserId);
+        }
+
+        if (!Objects.equals(targetUserId, requesterId)) {
+            throw new AccessDeniedException("Пользователь не может смотреть чужие задачи");
+        }
+        return taskRepository.findAllByUserId(requesterId);
+    }
 }
-
-
