@@ -26,11 +26,8 @@ public class UserSecurityService implements UserDetailsService{
             .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден" + email));
 
 
-        return new org.springframework.security.core.userdetails.User(
-            user.getEmail(),
-            user.getPassword(),
-            Collections.singletonList(new SimpleGrantedAuthority(user.getRole().getAuthority()))
-        );
+        return new CustomUserDetails(user);
+        
         
     }
 
