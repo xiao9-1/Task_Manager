@@ -1,19 +1,28 @@
 package com.example.task_manager.controller;
 
+import com.example.task_manager.dto.AdminTaskResponse;
+import com.example.task_manager.dto.TaskDto;
 import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.dto.TaskResponse;
 import com.example.task_manager.exception.AccessDeniedException;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
+import com.example.task_manager.security.CustomUserDetails;
 import com.example.task_manager.service.TaskService;
 import com.example.task_manager.service.UserService;
+import com.example.task_manager.mapper.TaskMapper;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation
+.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+//import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,181 +35,113 @@ public class TaskController {
 
     private final TaskService taskService;
     private final UserService userService;
+    private final TaskMapper taskMapper;
 
-    public TaskController(TaskService taskService, UserService userService) {
+    public TaskController(TaskService taskService, UserService userService, TaskMapper taskMapper) {
         this.taskService = taskService;
         this.userService = userService;
+        this.taskMapper = taskMapper;
     }
+
+    // ====== GET ======
 
     // GET /tasks - получить все задачи
     @GetMapping
-    public List<TaskResponse> getAllTasks() {
-        log.info("GET /tasks - получение всех задач");
+    @PreAuthorize("isAuthenticated()")
+    public List<TaskDto> getAllTasks(@AuthenticationPrincipal CustomUserDetails user) {
+        log.info("GET /tasks - userId={}, role={}", user.getId(), user.getRole());
 
-        User currentUser = userService.getCurrentUser();
+        List<Task> tasks = taskService.getAllTasksForUser(user.getId(), user.getRole());
 
-        log.debug("Текущий пользователь: ID={}, role={}, email={}", 
-                  currentUser.getId(), currentUser.getRole(), currentUser.getEmail());
-
-        List<Task> tasks;
-        if (Role.ADMIN.equals(currentUser.getRole())) {
-            log.info("ADMIN {} запрашивает все задачи", currentUser.getEmail());
-            tasks = taskService.getAllTasks();
-        } else {
-            log.info("USER {} запрашивает только свои задачи", currentUser.getEmail());
-            tasks = taskService.getTasksByUserId(currentUser.getId());
-        }
-        
-        log.debug("Найдено задач: {}", tasks.size());
-        return tasks.stream()
-                .map(TaskResponse::from)
-                .toList();
+        return tasks
+            .stream()
+            .map(task -> taskMapper.toDto(task, user.getRole())) 
+            .toList();
     }
 
     // GET /tasks/{id} - получить задачу по ID
     @GetMapping("/{id}")
-    public TaskResponse getTaskById(@PathVariable("id") Long id) {
-        log.info("GET /tasks/{} - запрос задачи по ID", id);
+    @PreAuthorize("isAuthenticated()")
+    public TaskDto getTaskById(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user) {
+        log.info("GET /tasks/id={} - userId={}, role={}", id, user.getId(), user.getRole());                                
+        Task task = taskService.getTaskByIdForUser(id, user.getId(), user.getRole());
 
-        User currentUser = userService.getCurrentUser();
-        log.debug("Текущий пользователь: ID={}, role={}", currentUser.getId(), currentUser.getRole());
-
-        Task task = taskService.getTaskById(id);
-        log.debug("Найдена задача: ID={}, userId={}, title={}", task.getId(), task.getUserId(), task.getTitle());
-
-        if (!Role.ADMIN.equals(currentUser.getRole()) && !task.getUserId().equals(currentUser.getId())) {
-            log.warn("Доступ запрещён: USER {} пытается получить задачу ID={}, принадлежащую пользователю ID={}", 
-                     currentUser.getEmail(), id, task.getUserId());
-            throw new AccessDeniedException("Доступ запрещён. Это не ваша задача");
-        }
-        
-        log.info("Доступ разрешён: задача ID={} возвращена пользователю {}", id, currentUser.getEmail());
-        return TaskResponse.from(task);
-    }
-
-    // POST /tasks - создать задачу
-    @PostMapping
-    public ResponseEntity<TaskResponse> createTask(@RequestBody TaskRequest request) {
-        log.info("POST /tasks - запрос на создание задачи: title='{}', dueTime={}",
-                request.title(), request.dueTime());
-
-        User currentUser = userService.getCurrentUser();
-        log.debug("Текущий пользователь: ID={}, role={}, email={}", 
-                  currentUser.getId(), currentUser.getRole(), currentUser.getEmail());
-        Long targetUserId = request.userId();
-        if (!Role.ADMIN.equals(currentUser.getRole()) && !currentUser.getId().equals(targetUserId)) {
-            log.warn("Доступ запрещён: USER {} пытается создать задачу для пользователя ID={}", 
-                     currentUser.getEmail(), targetUserId);
-            throw new AccessDeniedException("Доступ запрещён. Нельзя создавать задачи для других пользователей");
-        }
-
-        log.info("Создаём задачу для пользователя ID={}", targetUserId);
-        Task newTask = taskService.createTask(request);
-        log.info("Задача создана: ID={}, title={}", newTask.getId(), newTask.getTitle());
-        
-        return ResponseEntity.status(HttpStatus.CREATED).body(TaskResponse.from(newTask));
-    }
-
-    @PostMapping("/{id}/complete")
-    public TaskResponse completeTask(@PathVariable("id") Long id) {
-        log.info("POST /tasks/{}/complete - запрос на завершение задачи", id);
-        
-        User currentUser = userService.getCurrentUser();
-        log.debug("Текущий пользователь: ID={}, role={}, email={}", 
-                  currentUser.getId(), currentUser.getRole(), currentUser.getEmail());
-        
-        Task task = taskService.getTaskById(id);
-        log.debug("Завершаемая задача: ID={}, userId={}, title={}", task.getId(), task.getUserId(), task.getTitle());
-        
-        if (!Role.ADMIN.equals(currentUser.getRole()) && !task.getUserId().equals(currentUser.getId())) {
-            log.warn("Доступ запрещён: USER {} пытается завершить задачу ID={}, принадлежащую пользователю ID={}", 
-                     currentUser.getEmail(), id, task.getUserId());
-            throw new AccessDeniedException("Доступ запрещён. Это не ваша задача");
-        }
-        
-        log.info("Завершаем задачу ID={}", id);
-        Task completedTask = taskService.completeTask(id);
-        log.info("Задача ID={} завершена, статус={}", id, completedTask.getStatus());
-        
-        return TaskResponse.from(completedTask);
-    }
-
-    // PUT /tasks/{id} - обновить задачу
-    @PutMapping("/{id}")
-    public ResponseEntity<TaskResponse> updateTask(@PathVariable("id") Long id, @RequestBody TaskRequest request) {
-        log.info("PUT /tasks/{} - запрос на обновление задачи", id);
-        
-        User currentUser = userService.getCurrentUser();
-        log.debug("Текущий пользователь: ID={}, role={}, email={}", 
-                  currentUser.getId(), currentUser.getRole(), currentUser.getEmail());
-        
-        Task task = taskService.getTaskById(id);
-        log.debug("Обновляемая задача: ID={}, userId={}, title={}", task.getId(), task.getUserId(), task.getTitle());
-        
-        if (!Role.ADMIN.equals(currentUser.getRole()) && !task.getUserId().equals(currentUser.getId())) {
-            log.warn("Доступ запрещён: USER {} пытается обновить задачу ID={}, принадлежащую пользователю ID={}", 
-                     currentUser.getEmail(), id, task.getUserId());
-            throw new AccessDeniedException("Доступ запрещён. Это не ваша задача");
-        }
-        
-        log.info("Обновляем задачу ID={}", id);
-        Task updatedTask = taskService.updateTask(id, request);
-        log.info("Задача ID={} обновлена", id);
-        
-        return ResponseEntity.ok(TaskResponse.from(updatedTask));
-    }
-
-    // DELETE /tasks/{id} - удалить задачу
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable("id") Long id) {
-        log.info("DELETE /tasks/{} - запрос на удаление задачи", id);
-        
-        User currentUser = userService.getCurrentUser();
-        log.debug("Текущий пользователь: ID={}, role={}, email={}", 
-                  currentUser.getId(), currentUser.getRole(), currentUser.getEmail());
-        
-        Task task = taskService.getTaskById(id);
-        log.debug("Удаляемая задача: ID={}, userId={}, title={}", task.getId(), task.getUserId(), task.getTitle());
-        
-        if (!Role.ADMIN.equals(currentUser.getRole()) && !task.getUserId().equals(currentUser.getId())) {
-            log.warn("Доступ запрещён: USER {} пытается удалить задачу ID={}, принадлежащую пользователю ID={}", 
-                     currentUser.getEmail(), id, task.getUserId());
-            throw new AccessDeniedException("Доступ запрещён. Это не ваша задача");
-        }
-        
-        log.info("Удаляем задачу ID={}", id);
-        taskService.deleteTask(id);
-        log.info("Задача ID={} удалена", id);
-        
-        return ResponseEntity.noContent().build();
+        return taskMapper.toDto(task, user.getRole());
     }
 
     // GET /tasks/user/{userId} - получить задачи конкретного пользователя
     @GetMapping("/user/{userId}")
-    public List<TaskResponse> getUserTasks(@PathVariable("userId") Long userId) {
-        log.info("GET /tasks/user/{} - получение задач пользователя", userId);
-        
-        User currentUser = userService.getCurrentUser();
-        log.debug("Текущий пользователь: ID={}, role={}, email={}", 
-                  currentUser.getId(), currentUser.getRole(), currentUser.getEmail());
-        
-        if (Role.ADMIN.equals(currentUser.getRole())) {
-            log.info("ADMIN {} запрашивает задачи пользователя ID={}", currentUser.getEmail(), userId);
-        } else {
-            log.info("USER {} запрашивает задачи", currentUser.getEmail());
-            if (!currentUser.getId().equals(userId)) {
-                log.warn("Доступ запрещён: USER {} пытается получить задачи пользователя ID={}", 
-                         currentUser.getEmail(), userId);
-                throw new AccessDeniedException("Доступ запрещён. Нельзя смотреть чужие задачи");
-            }
-        }
-        List<Task> tasks = taskService.getTasksByUserId(userId);
-        log.debug("Найдено задач: {}", tasks.size());
-        
-        return tasks.stream()
-                .map(TaskResponse::from)
-                .toList();
+    @PreAuthorize("isAuthenticated()")
+    public List<TaskDto> getUserTasks(@PathVariable Long userId, @AuthenticationPrincipal CustomUserDetails user) {
 
+        log.info("GET /tasks/user/userId - userId={}, role={}", user.getId(), user.getRole());
+
+        List<Task> tasks = taskService.getAllTasksByUserIdForUser(userId, user.getId(), user.getRole());
+
+        return tasks
+            .stream()
+            .map(task -> taskMapper.toDto(task, user.getRole()))
+            .toList();
+
+    }
+
+    // ====== POST ======
+
+    // POST /tasks - создать задачу
+    @PostMapping
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<TaskResponse> createTask(@RequestBody TaskRequest request, @AuthenticationPrincipal CustomUserDetails user) {
+
+        log.info("POST /tasks - userId={}, title={}", user.getId(), request.title());
+
+        Task task = taskService.createTask(request, user.getId());
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(TaskResponse.from(task));
+    }
+
+    // POST /tasks/id/complete - завершить задачу
+    @PostMapping("/{id}/complete")
+    @PreAuthorize("isAuthenticated()")
+    public TaskResponse completeTask(@PathVariable Long id,
+                                    @AuthenticationPrincipal CustomUserDetails user) {
+
+        log.info("POST /tasks/{}/complete - userId={}", id, user.getId());
+
+        Task completed = taskService.completeTask(id, user.getId(), user.getRole());
+
+        log.info("Task completed: id={}, status={}", id, completed.getStatus());
+
+        return TaskResponse.from(completed);
+    }
+
+    // ====== PUT ======
+
+    // PUT /tasks/{id} - обновить задачу
+    @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public TaskResponse updateTask(@PathVariable Long id,
+                                @RequestBody TaskRequest request,
+                                @AuthenticationPrincipal CustomUserDetails user) {
+        log.info("PUT /tasks/{} - userId={}", id, user.getId());
+
+        Task updated = taskService.updateTask(id, request, user.getId(), user.getRole());
+
+        return TaskResponse.from(updated);
+    }
+
+    // ====== DELETE ======
+
+    // DELETE /tasks/{id} - удалить задачу
+    @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id,
+                                        @AuthenticationPrincipal CustomUserDetails user) {
+        log.info("DELETE /tasks/{} - userId={}", id, user.getId());
+
+        taskService.deleteTask(id, user.getId(), user.getRole());
+
+        return ResponseEntity.noContent().build();
 
     }
 
