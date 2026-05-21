@@ -18,7 +18,7 @@ public class StatusScheduler {
         this.taskRepository = taskRepository;
     }
 
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelay = 50000)
     public void run() {
         statusUpdateService.updateAllStatuses(
             taskRepository.findAll()
