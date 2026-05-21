@@ -15,4 +15,8 @@ public record ErrorDto(String error, String timestamp, int status) {
     public static ErrorDto internalError(String message) {
         return new ErrorDto(message, LocalDateTime.now().toString(), 500);
     }
+
+    public static ErrorDto forbidden(String message) {
+        return new ErrorDto(message, LocalDateTime.now().toString(), 403);
+    }
 }
