@@ -34,12 +34,10 @@ public class TaskController {
     private static final Logger log = LoggerFactory.getLogger(TaskController.class);
 
     private final TaskService taskService;
-    private final UserService userService;
     private final TaskMapper taskMapper;
 
-    public TaskController(TaskService taskService, UserService userService, TaskMapper taskMapper) {
+    public TaskController(TaskService taskService, TaskMapper taskMapper) {
         this.taskService = taskService;
-        this.userService = userService;
         this.taskMapper = taskMapper;
     }
 
