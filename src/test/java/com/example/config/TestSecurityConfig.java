@@ -30,8 +30,11 @@ public class TestSecurityConfig {
     public SecurityFilterChain securityTestSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
+            
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/info/version").permitAll()
                 .anyRequest().authenticated()
+                
             )
             .httpBasic(Customizer.withDefaults());
         return http.build();

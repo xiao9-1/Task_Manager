@@ -140,6 +140,32 @@ class TaskControllerTest {
     }
 
     @Test
+    
+    void unauthorizedUser_shouldReturn401() throws Exception {
+
+        mockMvc.perform(get("/tasks"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/tasks/1"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/tasks/user/1"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/tasks").with(csrf()))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/tasks/1/complete").with(csrf()))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(put("/tasks/1").with(csrf()))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(delete("/tasks/1").with(csrf()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void getAllTasks_user_shouldReturnTaskResponse() throws Exception {
 
         authenticate(user(1L));
@@ -505,3 +531,5 @@ class TaskControllerTest {
         verify(taskService).deleteTask(eq(2L), eq(1L), eq(Role.ADMIN));
     }
 }
+
+// Mapper 401 info/version
