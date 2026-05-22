@@ -29,10 +29,6 @@ public class User {
     @Column(name = "is_top")
     private boolean top;
 
-    // // Связь 1 User -> Many Tasks
-    // @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // private List<Task> tasks = new ArrayList<>();
-
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role;
