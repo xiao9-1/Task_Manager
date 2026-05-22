@@ -4,6 +4,7 @@ import com.example.task_manager.dto.TaskDto;
 import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.exception.AccessDeniedException;
 import com.example.task_manager.exception.TaskNotFoundException;
+import com.example.task_manager.exception.UserNotFoundException;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
@@ -40,28 +41,6 @@ public class TaskService {
 
     // GET все задачи
 
-    // public List<Task> getAllTasks() {
-    //     log.info("Запрос всех задач");
-    //     //List<TaskDto> tasks = taskRepository.findAll()
-    //     //log.debug("Найдено задач: {}", tasks.size());
-    //     return taskRepository.findAll();
-    // }
-    
-    // GET задача по id
-
-    // public Task getTaskById(Long id) {
-    //     log.debug("Поиск задачи с ID: {} ", id);
-    //     return taskRepository.findById(id)
-    //             .map(task -> {
-    //                 log.info("Найдена задача: ID={}, title={}", task.getId(), task.getTitle());
-    //                 return task;
-    //             })
-    //             .orElseThrow(() -> {
-    //                 log.warn("Задача с ID {} не найдена", id);
-    //                 return new RuntimeException("Задача с ID " + id + " не найдена");
-    //             });
-    // }
-
     // POST Создать новую задачу Method updated 
     // Если не указывается ID автора задачи, то ID присваивается текущему пользователю
     public Task createTask(TaskRequest request, Long userId) {
@@ -91,7 +70,7 @@ public class TaskService {
         }
 
         User owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new RuntimeException("Владелец задачи не найден"));
+                .orElseThrow(() -> new UserNotFoundException("Владелец задачи не найден"));
 
         Task task = new Task(request.title(), request.dueTime(), ownerId);
 
@@ -267,7 +246,7 @@ public class TaskService {
     public List<Task> getAllTasksByUserIdForUser(Long targetUserId, Long requesterId, Role role) {
 
         if (!userRepository.existsById(targetUserId)) {
-            throw new RuntimeException("Пользователь с ID " + targetUserId + " не найден");
+            throw new UserNotFoundException("Пользователь с ID " + targetUserId + " не найден");
         }
 
         if (role == Role.ADMIN) {
