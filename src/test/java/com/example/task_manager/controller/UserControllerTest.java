@@ -1,6 +1,7 @@
 package com.example.task_manager.controller;
 import com.example.config.TestSecurityConfig;
 import com.example.task_manager.dto.UserRequest;
+import com.example.task_manager.exception.UserNotFoundException;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.User;
 import com.example.task_manager.repository.TaskRepository;
@@ -154,7 +155,7 @@ class UserControllerTest {
     @DisplayName("GET /users/999 - несуществующий пользователь → 404")
     void getUserById_NonExistingId_Returns404() throws Exception {
         when(userService.getUserById(999L))
-                .thenThrow(new RuntimeException("Пользователь с ID 999 не найден"));
+                .thenThrow(new UserNotFoundException("Пользователь с ID 999 не найден"));
 
         mockMvc.perform(get("/users/999"))
                 .andExpect(status().isNotFound())
