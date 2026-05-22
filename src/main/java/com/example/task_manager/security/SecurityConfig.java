@@ -47,10 +47,7 @@ public class SecurityConfig {
 
     @Bean
     @Profile("prod")
-    public SecurityFilterChain prodSecurityFilterChain(
-                                    HttpSecurity http,
-                                    AuthenticationEntryPoint authenticationEntryPoint,
-                                    AccessDeniedHandler accessDeniedHandler) throws Exception {
+    public SecurityFilterChain prodSecurityFilterChain( HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/users/register").permitAll()
@@ -62,12 +59,6 @@ public class SecurityConfig {
             .formLogin(form -> form
             .defaultSuccessUrl("/tasks", true)
         )
-            .exceptionHandling(ex -> ex
-            .authenticationEntryPoint(authenticationEntryPoint) // 401
-            .accessDeniedHandler(accessDeniedHandler)           // 403
-        )
-
-
             .csrf(csrf -> csrf.disable());
         return http.build();
     }
