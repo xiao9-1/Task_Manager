@@ -201,24 +201,6 @@ public class TaskService {
         return savedTask;
     }
 
-    // проверка существования задачи
-    // public boolean existsById(Long id) {
-    //     log.debug("Проверка существования задачи ID={}", id);
-    //     return taskRepository.existsById(id);
-    // }
-
-    // Get / все задачи пользователя
-    // public List<Task> getTasksByUserId(Long userId) {
-    //     log.info("Запрос всех задач пользователя с Id {}", userId);
-
-    //     // Проверяем существование пользователя
-    //     userRepository.findById(userId)
-    //             .orElseThrow(() -> new RuntimeException("Пользователь с ID " + userId + " не найден"));
-
-    //     return taskRepository.findAllByUserId(userId);
-    // }
-
-
     // new method for GET /tasks
     public List<Task> getAllTasksForUser(Long userId, Role role) {
         if (role == Role.ADMIN) {
