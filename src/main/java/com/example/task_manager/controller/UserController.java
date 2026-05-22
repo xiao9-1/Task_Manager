@@ -5,13 +5,11 @@ import com.example.task_manager.dto.UserResponse;
 import com.example.task_manager.exception.AccessDeniedException;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.User;
-import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.Comparator;
 
