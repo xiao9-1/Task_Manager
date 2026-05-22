@@ -1,6 +1,7 @@
 package com.example.task_manager.service;
 
 import com.example.task_manager.dto.UserRequest;
+import com.example.task_manager.exception.UserNotFoundException;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
@@ -144,8 +145,8 @@ public class UserServiceTest {
     void getUserById_NonExistingId_ThrowsException() {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
         
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
+        UserNotFoundException exception = assertThrows(
+                UserNotFoundException.class,
                 () -> userService.getUserById(999L)
         );
 
