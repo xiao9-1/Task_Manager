@@ -61,7 +61,7 @@ class TaskUserIntegrationTest {
     @DisplayName("Пользователь может создать задачу")
     void userCanCreateTask() {
         TaskRequest request = new TaskRequest("Купить молоко", dueTime, testUserId, 0.5);
-        Task task = taskService.createTask(request);
+        Task task = taskService.createTask(request, testUserId);
         
         assertNotNull(task.getId());
         assertEquals("Купить молоко", task.getTitle());
@@ -79,16 +79,16 @@ class TaskUserIntegrationTest {
         TaskRequest request = new TaskRequest("Задача", dueTime, 999L, 0.5);
         
         assertThrows(RuntimeException.class, 
-            () -> taskService.createTask(request));
+            () -> taskService.createTask(request, testUserId));
     }
 
     @Test
     @DisplayName("Пользователь может получить свои задачи")
     void userCanGetOwnTasks() {
-        taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.5));
-        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.5));
+        taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.5), testUserId);
+        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.5), testUserId);
         
-        List<Task> tasks = taskService.getTasksByUserId(testUserId);
+        List<Task> tasks = taskService.getAllTasksForUser(testUserId, Role.USER);
         
         assertEquals(2, tasks.size());
         assertTrue(tasks.stream().allMatch(t -> t.getUserId().equals(testUserId)));
@@ -101,7 +101,7 @@ class TaskUserIntegrationTest {
         assertFalse(userBefore.isTop());
         
         TaskRequest request = new TaskRequest("Важная задача", dueTime, testUserId, 1.0);
-        taskService.createTask(request);
+        taskService.createTask(request, testUserId);
         
         User userAfter = userService.getUserById(testUserId);
         assertTrue(userAfter.isTop());
@@ -111,12 +111,12 @@ class TaskUserIntegrationTest {
     @DisplayName("Удаление задачи обновляет TOP статус пользователя")
     void deletingTaskUpdatesUserTopStatus() {
         TaskRequest request = new TaskRequest("Важная задача", dueTime, testUserId, 1.0);
-        Task task = taskService.createTask(request);
+        Task task = taskService.createTask(request, testUserId);
         
         User userAfterCreate = userService.getUserById(testUserId);
         assertTrue(userAfterCreate.isTop());
 
-        taskService.deleteTask(task.getId());
+        taskService.deleteTask(task.getId(), userAfterCreate.getId(), Role.USER);
         
         User userAfterDelete = userService.getUserById(testUserId);
         assertFalse(userAfterDelete.isTop());
@@ -126,12 +126,12 @@ class TaskUserIntegrationTest {
     @DisplayName("Обновление рейтинга задачи обновляет TOP статус пользователя")
     void updatingTaskRatingUpdatesUserTopStatus() {
         TaskRequest request = new TaskRequest("Обычная задача", dueTime, testUserId, 0.5);
-        Task task = taskService.createTask(request);
+        Task task = taskService.createTask(request, testUserId);
         
         assertFalse(userService.getUserById(testUserId).isTop());
 
         TaskRequest updateRequest = new TaskRequest("Обычная задача", dueTime, testUserId, 1.0);
-        taskService.updateTask(task.getId(), updateRequest);
+        taskService.updateTask(task.getId(), updateRequest, testUserId, Role.USER);
         
         assertTrue(userService.getUserById(testUserId).isTop());
     }
@@ -140,11 +140,11 @@ class TaskUserIntegrationTest {
     @DisplayName("Завершение задачи обновляет TOP статус пользователя")
     void completingTaskUpdatesUserTopStatus() {
         TaskRequest request = new TaskRequest("Важная задача", dueTime, testUserId, 1.0);
-        Task task = taskService.createTask(request);
+        Task task = taskService.createTask(request, testUserId);
         
         assertTrue(userService.getUserById(testUserId).isTop());
         
-        taskService.completeTask(task.getId());
+        taskService.completeTask(task.getId(), testUserId, Role.USER);
         
         assertTrue(userService.getUserById(testUserId).isTop());
     }

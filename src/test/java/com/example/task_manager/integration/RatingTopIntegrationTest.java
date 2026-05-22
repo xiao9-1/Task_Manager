@@ -43,21 +43,23 @@ class RatingTopIntegrationTest {
 
     @BeforeEach
     void setUp() {
+
         dueTime = LocalDateTime.now().plusDays(7);
 
         User user = new User("Тестовый пользователь", "test@test.com");
         user.setPassword("{noop}password");
         user.setRole(Role.USER);
+
         user = userRepository.save(user);
+
         testUserId = user.getId();
-        
     }
 
     @Test
     @DisplayName("TOP = false при сумме рейтингов < 1")
     void topIsFalseWhenSumLessThanOne() {
-        taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.3));
-        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.3));
+        taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.3), testUserId);
+        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.3), testUserId);
         
         assertFalse(userService.getUserById(testUserId).isTop());
     }
@@ -65,8 +67,8 @@ class RatingTopIntegrationTest {
     @Test
     @DisplayName("TOP = true при сумме рейтингов = 1")
     void topIsTrueWhenSumEqualsOne() {
-        taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.5));
-        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.5));
+        taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.5), testUserId);
+        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.5), testUserId);
         
         assertTrue(userService.getUserById(testUserId).isTop());
     }
@@ -74,8 +76,8 @@ class RatingTopIntegrationTest {
     @Test
     @DisplayName("TOP = true при сумме рейтингов > 1")
     void topIsTrueWhenSumGreaterThanOne() {
-        taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.6));
-        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.6));
+        taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.6), testUserId);
+        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.6), testUserId);
         
         assertTrue(userService.getUserById(testUserId).isTop());
     }
@@ -83,22 +85,22 @@ class RatingTopIntegrationTest {
     @Test
     @DisplayName("TOP пересчитывается при добавлении новой задачи")
     void topRecalculatesWhenTaskAdded() {
-        taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.5));
+        taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.5), testUserId);
         assertFalse(userService.getUserById(testUserId).isTop());
         
-        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.5));
+        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.5), testUserId);
         assertTrue(userService.getUserById(testUserId).isTop());
     }
 
     @Test
     @DisplayName("TOP пересчитывается при удалении задачи")
     void topRecalculatesWhenTaskDeleted() {
-        var task1 = taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.6));
-        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.6));
+        var task1 = taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.6), testUserId);
+        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.6), testUserId);
         
         assertTrue(userService.getUserById(testUserId).isTop());
         
-        taskService.deleteTask(task1.getId());
+        taskService.deleteTask(task1.getId(), testUserId, Role.USER);
         
         assertFalse(userService.getUserById(testUserId).isTop());
     }
@@ -106,11 +108,11 @@ class RatingTopIntegrationTest {
     @Test
     @DisplayName("TOP пересчитывается при обновлении рейтинга")
     void topRecalculatesWhenRatingUpdated() {
-        var task = taskService.createTask(new TaskRequest("Задача", dueTime, testUserId, 0.5));
+        var task = taskService.createTask(new TaskRequest("Задача", dueTime, testUserId, 0.5), testUserId);
         
         assertFalse(userService.getUserById(testUserId).isTop());
         
-        taskService.updateTask(task.getId(), new TaskRequest("Задача", dueTime, testUserId, 1.0));
+        taskService.updateTask(task.getId(), new TaskRequest("Задача", dueTime, testUserId, 1.0), testUserId, Role.USER);
         
         assertTrue(userService.getUserById(testUserId).isTop());
     }
@@ -124,9 +126,9 @@ class RatingTopIntegrationTest {
         user2 = userRepository.save(user2);
         Long secondUserId = user2.getId();
 
-        taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.6));
-        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.6));
-        taskService.createTask(new TaskRequest("Задача 3", dueTime, secondUserId, 0.3));
+        taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.6), testUserId);
+        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.6), testUserId);
+        taskService.createTask(new TaskRequest("Задача 3", dueTime, secondUserId, 0.3), secondUserId);
         
         assertTrue(userService.getUserById(testUserId).isTop());
         assertFalse(userService.getUserById(secondUserId).isTop());
