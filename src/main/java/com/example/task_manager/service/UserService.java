@@ -4,6 +4,7 @@ import com.example.task_manager.model.User;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.dto.UserRequest;
+import com.example.task_manager.exception.UserNotFoundException;
 import com.example.task_manager.dto.AdminTaskResponse;
 import com.example.task_manager.dto.TaskResponse;
 import com.example.task_manager.model.Role;
@@ -50,10 +51,10 @@ public class UserService {
                     return user;
                 })
                 .orElseThrow(() -> {
-                    log.warn("Пользователь с ID {} не найден", id);
-                    return new RuntimeException("Пользователь с ID " + id + " не найден");
+                log.warn("Пользователь с ID {} не найден", id);
+                return new UserNotFoundException("Пользователь с ID " + id + " не найден");
                 });
-    }
+        }
 
     public User createUser(UserRequest request) {
         log.info("Создание нового пользователя: name='{}', email='{}'", request.name(), request.email());
@@ -116,7 +117,7 @@ public class UserService {
             .getName();
 
         return userRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+            .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 }
 
