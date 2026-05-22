@@ -27,10 +27,8 @@ public class Task {
 
     private Long createdBy;
     private Long updatedBy;
-    private Long deletedBy;
 
     private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
     
     public Long getUserId() {
         return userId;
@@ -102,9 +100,6 @@ public class Task {
         this.completedAt = completedAt;
     }
 
-    // public User getUser() { return user; }
-    // public void setUser(User user) { this.user = user; }
-
     public Double getRating() {
         return rating;
     }
@@ -137,24 +132,6 @@ public class Task {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
-
-    public Long getDeletedBy() {
-        return deletedBy;
-    }
-
-    public void setDeletedBy(Long deletedBy) {
-        this.deletedBy = deletedBy;
-    }
-
-    public LocalDateTime getDeletedAt() {
-        return deletedAt;
-    }
-
-    public void setDeletedAt(LocalDateTime deletedAt) {
-        this.deletedAt = deletedAt;
-    }
-
-
 }
 
 
