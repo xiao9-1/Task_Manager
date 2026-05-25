@@ -1,26 +1,53 @@
 package com.example.task_manager.model;
 
 import java.time.LocalDateTime;
+import jakarta.persistence.*;
 
+@Entity 
+@Table(name = "tasks")
 public class Task {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String title;
 
+    @Enumerated(EnumType.STRING)
     private Status status;
 
     private LocalDateTime createdAt;
-
     private LocalDateTime dueTime;
-
     private LocalDateTime completedAt;
+    private Double rating;
+
+    @Column(name = "user_id", insertable = true, updatable = false)
+    private Long userId;
+
+    private Long createdBy;
+    private Long updatedBy;
+
+    private LocalDateTime updatedAt;
+    
+    public Long getUserId() {
+        return userId;
+    }
+
+    public Task() {}
 
     public Task(String title, LocalDateTime dueTime) {
         this.title = title;
         this.dueTime = dueTime;
         this.status = Status.PENDING;
+    }
 
+    public Task(String title, LocalDateTime dueTime, Long userId) {
+        this.title = title;
+        this.dueTime = dueTime;
+        this.userId = userId;
+        this.status = Status.PENDING;
+        this.rating = null;
     }
 
     // Геттер - получить значение ID
@@ -73,6 +100,38 @@ public class Task {
         this.completedAt = completedAt;
     }
 
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
+    }
+
+
+    public Long getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(Long createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public Long getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(Long updatedBy) {
+        this.updatedBy = updatedBy;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }
 
 

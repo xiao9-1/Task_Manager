@@ -1,97 +1,146 @@
 package com.example.task_manager.controller;
 
+import com.example.task_manager.dto.AdminTaskResponse;
+import com.example.task_manager.dto.TaskDto;
+import com.example.task_manager.dto.TaskRequest;
+import com.example.task_manager.dto.TaskResponse;
+import com.example.task_manager.exception.AccessDeniedException;
+import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
-import com.example.task_manager.model.TaskRequest;
+import com.example.task_manager.model.User;
+import com.example.task_manager.security.CustomUserDetails;
 import com.example.task_manager.service.TaskService;
+import com.example.task_manager.service.UserService;
+import com.example.task_manager.mapper.TaskMapper;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation
+.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+//import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/tasks")
 public class TaskController {
 
-    private final TaskService taskService;
+    private static final Logger log = LoggerFactory.getLogger(TaskController.class);
 
-    public TaskController(TaskService taskService) {
+    private final TaskService taskService;
+    private final TaskMapper taskMapper;
+
+    public TaskController(TaskService taskService, TaskMapper taskMapper) {
         this.taskService = taskService;
+        this.taskMapper = taskMapper;
     }
+
+    // ====== GET ======
 
     // GET /tasks - получить все задачи
     @GetMapping
-    public List<Task> getAllTasks() {
-        return taskService.getAllTasks();
+    @PreAuthorize("isAuthenticated()")
+    public List<TaskDto> getAllTasks(@AuthenticationPrincipal CustomUserDetails user) {
+        log.info("GET /tasks - userId={}, role={}", user.getId(), user.getRole());
+
+        List<Task> tasks = taskService.getAllTasksForUser(user.getId(), user.getRole());
+
+        return tasks
+            .stream()
+            .map(task -> taskMapper.toDto(task, user.getRole())) 
+            .toList();
     }
 
     // GET /tasks/{id} - получить задачу по ID
     @GetMapping("/{id}")
-    public ResponseEntity<?> getTaskById(@PathVariable Long id) {
-        try {
-            Task task = taskService.getTaskById(id);
-            return ResponseEntity.ok(task);
-        } catch (RuntimeException e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            error.put("timestamp", LocalDateTime.now().toString());
-            error.put("status", 404);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-        }
+    @PreAuthorize("isAuthenticated()")
+    public TaskDto getTaskById(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user) {
+        log.info("GET /tasks/id={} - userId={}, role={}", id, user.getId(), user.getRole());                                
+        Task task = taskService.getTaskByIdForUser(id, user.getId(), user.getRole());
+
+        return taskMapper.toDto(task, user.getRole());
     }
+
+    // GET /tasks/user/{userId} - получить задачи конкретного пользователя
+    @GetMapping("/user/{userId}")
+    @PreAuthorize("isAuthenticated()")
+    public List<TaskDto> getUserTasks(@PathVariable Long userId, @AuthenticationPrincipal CustomUserDetails user) {
+
+        log.info("GET /tasks/user/userId - userId={}, role={}", user.getId(), user.getRole());
+
+        List<Task> tasks = taskService.getAllTasksByUserIdForUser(userId, user.getId(), user.getRole());
+
+        return tasks
+            .stream()
+            .map(task -> taskMapper.toDto(task, user.getRole()))
+            .toList();
+
+    }
+
+    // ====== POST ======
 
     // POST /tasks - создать задачу
     @PostMapping
-    public ResponseEntity<?> createTask(@RequestBody TaskRequest request) {
-        try {
-            Task newTask = taskService.createTask(request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(newTask);
-        } catch (IllegalArgumentException e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            error.put("timestamp", LocalDateTime.now().toString());
-            error.put("status", 400);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-        }
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<TaskResponse> createTask(@RequestBody TaskRequest request, @AuthenticationPrincipal CustomUserDetails user) {
+
+        log.info("POST /tasks - userId={}, title={}", user.getId(), request.title());
+
+        Task task = taskService.createTask(request, user.getId());
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(TaskResponse.from(task));
     }
+
+    // POST /tasks/id/complete - завершить задачу
+    @PostMapping("/{id}/complete")
+    @PreAuthorize("isAuthenticated()")
+    public TaskResponse completeTask(@PathVariable Long id,
+                                    @AuthenticationPrincipal CustomUserDetails user) {
+
+        log.info("POST /tasks/{}/complete - userId={}", id, user.getId());
+
+        Task completed = taskService.completeTask(id, user.getId(), user.getRole());
+
+        log.info("Task completed: id={}, status={}", id, completed.getStatus());
+
+        return TaskResponse.from(completed);
+    }
+
+    // ====== PUT ======
 
     // PUT /tasks/{id} - обновить задачу
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateTask(@PathVariable Long id, @RequestBody TaskRequest request) {
-        try {
-            Task updatedTask = taskService.updateTask(id, request);
-            if (updatedTask == null) {
-                Map<String, Object> error = new HashMap<>();
-                error.put("error", "Задача с ID " + id + " не найдена");
-                error.put("timestamp", LocalDateTime.now().toString());
-                error.put("status", 404);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-            }
-            return ResponseEntity.ok(updatedTask);
-        } catch (IllegalArgumentException e) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            error.put("timestamp", LocalDateTime.now().toString());
-            error.put("status", 400);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
-        }
+    @PreAuthorize("isAuthenticated()")
+    public TaskResponse updateTask(@PathVariable Long id,
+                                @RequestBody TaskRequest request,
+                                @AuthenticationPrincipal CustomUserDetails user) {
+        log.info("PUT /tasks/{} - userId={}", id, user.getId());
+
+        Task updated = taskService.updateTask(id, request, user.getId(), user.getRole());
+
+        return TaskResponse.from(updated);
     }
+
+    // ====== DELETE ======
 
     // DELETE /tasks/{id} - удалить задачу
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteTask(@PathVariable Long id) {
-        boolean deleted = taskService.deleteTask(id);
-        if (!deleted) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", "Задача с ID " + id + " не найдена");
-            error.put("timestamp", LocalDateTime.now().toString());
-            error.put("status", 404);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
-        }
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id,
+                                        @AuthenticationPrincipal CustomUserDetails user) {
+        log.info("DELETE /tasks/{} - userId={}", id, user.getId());
+
+        taskService.deleteTask(id, user.getId(), user.getRole());
+
         return ResponseEntity.noContent().build();
+
     }
 
 }
