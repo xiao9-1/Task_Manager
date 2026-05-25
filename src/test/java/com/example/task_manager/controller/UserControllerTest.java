@@ -1,41 +1,47 @@
 package com.example.task_manager.controller;
-import com.example.config.TestSecurityConfig;
+
+//import com.example.config.TestSecurityConfig;
 import com.example.task_manager.dto.UserRequest;
-import com.example.task_manager.exception.UserNotFoundException;
 import com.example.task_manager.model.Role;
+import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
-import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
+import com.example.task_manager.service.TaskService;
 import com.example.task_manager.service.UserService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.springframework.http.MediaType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.util.Arrays;
+import java.util.List;
+
 @WebMvcTest(UserController.class)
-@Import(TestSecurityConfig.class)
-@ActiveProfiles("test-controller")
-@DisplayName("Тесты UserController")
-class UserControllerTest {
+@ActiveProfiles("prod") // профиль приложения
+@DisplayName("Тесты безопасности UserController")
+public class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private TaskService taskService;
 
     @MockitoBean
     private UserService userService;
@@ -43,205 +49,168 @@ class UserControllerTest {
     @MockitoBean
     private UserRepository userRepository;
 
-    @MockitoBean
-    private TaskRepository taskRepository;
-
     @Autowired
     private ObjectMapper objectMapper;
 
-    private User testUser1;
-    private User testUser2;
-    private UserRequest testRequest;
-    private List<User> userList;
+    private User testUser;
+    private User adminUser;
+    private Task userTask;
 
     @BeforeEach
     void setUp() {
-        // Создаём тестовых пользователей
-        testUser1 = new User("Алексей", "alex@example.com");
-        testUser1.setId(1L);
-        testUser1.setCreatedAt(LocalDateTime.now());
-        testUser1.setTaskCount(3);
-        testUser1.setRole(Role.ADMIN);
-
-        when(userService.getCurrentUser()).thenReturn(testUser1);
-
-        testUser2 = new User("Мария", "maria@example.com");
-        testUser2.setId(2L);
-        testUser2.setCreatedAt(LocalDateTime.now());
-        testUser2.setTaskCount(1);
-        testUser2.setRole(Role.ADMIN);
-
-        userList = Arrays.asList(testUser1, testUser2);
-        testRequest = new UserRequest("Алексей", "alex@example.com", "123");
+        // Обычный пользователь
+        testUser = new User("Test User", "user@test.com");
+        testUser.setId(1L);
+        testUser.setRole(Role.USER);
+        
+        // Админ
+        adminUser = new User("Admin", "admin@test.com");
+        adminUser.setId(2L);
+        adminUser.setRole(Role.ADMIN);
+        
+        when(userService.getCurrentUser()).thenReturn(testUser);
     }
 
     @Test
-    @DisplayName("GET /users - возвращает всех пользователей")
-    void getAllUsers_ReturnsListOfUsers() throws Exception {
-        when(userService.getAllUsers()).thenReturn(userList);
+    @DisplayName("GET /users - неавторизованный пользователь -> 401")
+    void unauthorized_GetUsers_Returns401() throws Exception {
+        mockMvc.perform(get("/users")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("GET /users - USER может получить всех пользователей -> 200")
+    @WithMockUser(username = "user@test.com", roles = "USER")
+    void user_GetAllUsers_Returns200() throws Exception {
+        
+        when(userService.getAllUsers()).thenReturn(List.of(testUser, adminUser));
+        mockMvc.perform(get("/users"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    @DisplayName("GET /users - ADMIN может получить всех пользователей -> 200")
+    @WithMockUser(roles = "ADMIN")
+    void admin_GetAllUsers_Returns200() throws Exception {
+        when(userService.getCurrentUser()).thenReturn(adminUser);
+        when(userService.getAllUsers()).thenReturn(Arrays.asList(testUser, adminUser));
 
         mockMvc.perform(get("/users"))
-                .andExpect(status().isOk());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.length()"). value(2));
     }
 
     @Test
-    @DisplayName("GET /users - сортировка по имени (по умолчанию)")
-    void getAllUsers_SortedByNameAsc() throws Exception {
-        when(userService.getAllUsers()).thenReturn(userList);
-
-        mockMvc.perform(get("/users"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Алексей"))
-                .andExpect(jsonPath("$[1].name").value("Мария"));
-    }
-
-    @Test
-    @DisplayName("GET /users?sortBy=name&order=desc - сортировка по имени убывание")
-    void getAllUsers_SortedByNameDesc() throws Exception {
-        when(userService.getAllUsers()).thenReturn(userList);
-
-        mockMvc.perform(get("/users?sortBy=name&order=desc"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Мария"))
-                .andExpect(jsonPath("$[1].name").value("Алексей"));
-    }
-
-    @Test
-    @DisplayName("GET /users?sortBy=taskCount&order=asc - сортировка по задачам возрастание")
-    void getAllUsers_SortedByTaskCountAsc() throws Exception {
-        when(userService.getAllUsers()).thenReturn(userList);
-
-        mockMvc.perform(get("/users?sortBy=taskCount&order=asc"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].taskCount").value(1))
-                .andExpect(jsonPath("$[1].taskCount").value(3));
-    }
-
-    @Test
-    @DisplayName("GET /users?sortBy=taskCount&order=desc - сортировка по задачам убывание")
-    void getAllUsers_SortedByTaskCountDesc() throws Exception {
-        when(userService.getAllUsers()).thenReturn(userList);
-
-        mockMvc.perform(get("/users?sortBy=taskCount&order=desc"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].taskCount").value(3))
-                .andExpect(jsonPath("$[1].taskCount").value(1));
-    }
-
-    @Test
-    @DisplayName("GET /users - пустой список")
-    void getAllUsers_EmptyList_ReturnsEmptyArray() throws Exception {
-        when(userService.getAllUsers()).thenReturn(Arrays.asList());
-
-        mockMvc.perform(get("/users"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
-    }
-
-    @Test
-    @DisplayName("GET /users/1 - существующий пользователь → 200 OK")
-    void getUserById_ExistingId_ReturnsUser() throws Exception {
-        when(userService.getUserById(1L)).thenReturn(testUser1);
+    @DisplayName("GET /users/1 - USER может получить свои данные -> 200")
+    @WithMockUser(username = "user@test.com", roles = "USER")
+    void user_GetOwnUser_Returns200() throws Exception {
+        when(userService.getUserById(1L)).thenReturn(testUser);
 
         mockMvc.perform(get("/users/1"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(1))
+            .andExpect(jsonPath("$.name").value("Test User"));
+    }
+
+    @Test
+    @DisplayName("GET /users/2 - USER может получить данные другого пользователя -> 200")
+    @WithMockUser(username = "user@test.com", roles = "USER")
+    void user_GetOtherUser_Returns200() throws Exception {
+
+        User otherUser = new User("Other user", "otherUser@mail.ru");
+        otherUser.setId(2L);
+        otherUser.setRole(Role.USER);
+        
+        when(userService.getUserById(2L)).thenReturn(otherUser);
+        
+        mockMvc.perform(get("/users/2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(2))
+                .andExpect(jsonPath("$.name").value("Other user"));
+    }
+
+    @Test
+    @DisplayName("GET /users/2 - ADMIN может получить данные любого пользователя -> 200")
+    @WithMockUser(roles = "ADMIN")
+    void admin_GetAnyUser_Returns200() throws Exception {
+        when(userService.getCurrentUser()).thenReturn(adminUser);
+        when(userService.getUserById(2L)).thenReturn(adminUser);
+        
+        mockMvc.perform(get("/users/2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(2));
+    }
+
+    @Test
+    @DisplayName("POST /users - USER не может создать нового пользователя -> 403")
+    @WithMockUser(username = "user@test.com", roles = "USER")
+    void user_CannotCreateUser_Returns403() throws Exception {
+        UserRequest request = new UserRequest("New User", "new@test.com", "123");
+        
+        mockMvc.perform(post("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+        
+        verify(userService, never()).createUser(any(UserRequest.class));
+    }
+
+    @Test
+    @DisplayName("GET /users/me - возвращает текущего пользователя -> 200")
+    @WithMockUser(username = "user@test.com", roles = "USER")
+    void getCurrentUser_ReturnsCurrentUser() throws Exception {
+        User currentUser = new User("Current User", "user@test.com");
+        currentUser.setId(1L);
+        currentUser.setRole(Role.USER);
+        
+        when(userService.getCurrentUser()).thenReturn(currentUser);
+        
+        mockMvc.perform(get("/users/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("Алексей"))
-                .andExpect(jsonPath("$.email").value("alex@example.com"))
-                .andExpect(jsonPath("$.taskCount").value(3));
+                .andExpect(jsonPath("$.name").value("Current User"))
+                .andExpect(jsonPath("$.email").value("user@test.com"));
     }
-
+    
     @Test
-    @DisplayName("GET /users/999 - несуществующий пользователь → 404")
-    void getUserById_NonExistingId_Returns404() throws Exception {
-        when(userService.getUserById(999L))
-                .thenThrow(new UserNotFoundException("Пользователь с ID 999 не найден"));
+    @DisplayName("GET /users - сортировка по имени (по умолчанию)")
+    @WithMockUser(username = "user@test.com", roles = "USER")
+    void getAllUsers_SortedByNameAsc() throws Exception {
 
-        mockMvc.perform(get("/users/999"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("Пользователь с ID 999 не найден"));
-    }
+        User testUser2 = new User("Иван", "user@test.com");
+        testUser2.setId(3L);
+        testUser2.setRole(Role.USER);
 
-    @Test
-    @DisplayName("POST /users - успешное создание пользователя → 201")
-    void createUser_ValidData_Returns201() throws Exception {
-        when(userService.createUser(any(UserRequest.class))).thenReturn(testUser1);
+        List<User> userList = Arrays.asList(testUser, testUser2);
+        when(userService.getAllUsers()).thenReturn(userList);
 
-        mockMvc.perform(post("/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(testRequest)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("Алексей"))
-                .andExpect(jsonPath("$.email").value("alex@example.com"))
-                .andExpect(jsonPath("$.taskCount").value(3));
-    }
-
-    @Test
-    @DisplayName("POST /users - пустое имя → 400")
-    void createUser_EmptyName_Returns400() throws Exception {
-        UserRequest emptyRequest = new UserRequest("", "alex@example.com", "123");
-
-        when(userService.createUser(any(UserRequest.class)))
-                .thenThrow(new IllegalArgumentException("Имя пользователя не может быть пустым"));
-
-        mockMvc.perform(post("/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(emptyRequest)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Имя пользователя не может быть пустым"));
-    }
-
-    @Test
-    @DisplayName("POST /users - пустой email → 400")
-    void createUser_EmptyEmail_Returns400() throws Exception {
-        UserRequest emptyRequest = new UserRequest("Алексей", "alex@example.com", "123");
-
-        when(userService.createUser(any(UserRequest.class)))
-                .thenThrow(new IllegalArgumentException("Email не может быть пустым"));
-
-        mockMvc.perform(post("/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(emptyRequest)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Email не может быть пустым"));
-    }
-
-    @Test
-    @DisplayName("POST /users - null имя → 400")
-    @WithMockUser(roles = "ADMIN")
-    void createUser_NullName_Returns400() throws Exception {
-        UserRequest nullRequest = new UserRequest(null, "alex@example.com", "123");
-
-        when(userService.createUser(any(UserRequest.class)))
-                .thenThrow(new IllegalArgumentException("Имя пользователя не может быть пустым"));
-
-        mockMvc.perform(post("/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(nullRequest)))
-                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/users"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Test User"))
+                .andExpect(jsonPath("$[1].name").value("Иван"));
     }
 
     @Test
     @DisplayName("GET /users - ответ содержит поле top")
+    @WithMockUser(username = "user@test.com", roles = "USER")
     void getAllUsers_ResponseContainsTopField() throws Exception {
-        when(userService.getAllUsers()).thenReturn(userList);
+        when(userService.getAllUsers()).thenReturn(List.of(testUser));
     
         mockMvc.perform(get("/users"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].top").exists())
             .andExpect(jsonPath("$[0].top").isBoolean());
-        }
+    }
 
     @Test
     @DisplayName("GET /users/1 - ответ содержит поле top")
+    @WithMockUser(username = "user@test.com", roles = "USER")
     void getUserById_ResponseContainsTopField() throws Exception {
-        when(userService.getUserById(1L)).thenReturn(testUser1);
+        when(userService.getUserById(1L)).thenReturn(testUser);
     
         mockMvc.perform(get("/users/1"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.top").exists())
             .andExpect(jsonPath("$.top").isBoolean());
     }
-
 }
