@@ -15,7 +15,9 @@ public record AdminTaskResponse(
         LocalDateTime dueTime,
         LocalDateTime completedAt,
         Long userId,
-        Double rating
+        Double rating,
+        Long projectId
+
 ) implements TaskDto {
     public static AdminTaskResponse from(Task task) {
         return new AdminTaskResponse(
@@ -29,7 +31,8 @@ public record AdminTaskResponse(
                 task.getDueTime(),
                 task.getCompletedAt(),
                 task.getUserId(),
-                task.getRating()
+                task.getRating(),
+                task.getProject() != null ? task.getProject().getId() : null
         );
     }
 }
