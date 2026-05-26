@@ -2,12 +2,15 @@ package com.example.task_manager.service;
 
 import com.example.task_manager.dto.TaskDto;
 import com.example.task_manager.dto.TaskRequest;
+import com.example.task_manager.dto.UserProjectTaskReport;
 import com.example.task_manager.exception.AccessDeniedException;
 import com.example.task_manager.exception.TaskNotFoundException;
 import com.example.task_manager.exception.UserNotFoundException;
+import com.example.task_manager.model.Project;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
+import com.example.task_manager.repository.ProjectRepository;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.security.CustomUserDetails;
@@ -29,12 +32,15 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final ProjectRepository projectRepository;
     private final StatusService statusService;
     private final UserService userService;
 
-    public TaskService(TaskRepository taskRepository, UserRepository userRepository, StatusService statusService, UserService userService) {
+
+    public TaskService(TaskRepository taskRepository, UserRepository userRepository, StatusService statusService, UserService userService, ProjectRepository projectRepository) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
+        this.projectRepository = projectRepository;
         this.statusService = statusService;
         this.userService = userService;
     }
@@ -71,8 +77,16 @@ public class TaskService {
 
         User owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new UserNotFoundException("Владелец задачи не найден"));
+        
+        Project project = null;
+        if (request.projectId() != null) {
+            project = projectRepository.findById(request.projectId())
+                    .orElseThrow(() -> new IllegalArgumentException("Проект не найден"));
+        }        
 
         Task task = new Task(request.title(), request.dueTime(), ownerId);
+
+        task.setProject(project);
 
         task.setCreatedAt(LocalDateTime.now());
         task.setCreatedBy(creator.getId());
@@ -240,4 +254,14 @@ public class TaskService {
         }
         return taskRepository.findAllByUserId(requesterId);
     }
+
+    public List<UserProjectTaskReport> getReport(Long userId, Role role) {
+        if (role == Role.ADMIN) {
+            return taskRepository.getUserProjectTaskReport(userId);
+        } else {
+            throw new AccessDeniedException("Пользователь не может смотреть отчет");
+        }
+        
+    }
 }
+
