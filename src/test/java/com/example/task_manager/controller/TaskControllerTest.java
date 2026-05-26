@@ -5,6 +5,7 @@ import com.example.task_manager.dto.AdminTaskResponse;
 import com.example.task_manager.dto.TaskDto;
 import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.dto.TaskResponse;
+import com.example.task_manager.dto.UserProjectTaskReport;
 import com.example.task_manager.exception.AccessDeniedException;
 import com.example.task_manager.exception.TaskNotFoundException;
 import com.example.task_manager.exception.UserNotFoundException;
@@ -43,6 +44,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -123,7 +125,8 @@ class TaskControllerTest {
             currDate.plusDays(1),
             null,
             userId,
-            0.5
+            0.5,
+            null
         );
     }
 
@@ -135,7 +138,8 @@ class TaskControllerTest {
             Status.PENDING,
             currDate,
             null,
-            0.5
+            0.5,
+            null
         );
     }
 

@@ -2,11 +2,13 @@ package com.example.task_manager.service;
 
 import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.dto.TaskResponse;
+import com.example.task_manager.dto.UserProjectTaskReport;
+import com.example.task_manager.model.Project;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
-
+import com.example.task_manager.repository.ProjectRepository;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.exception.AccessDeniedException;
@@ -42,6 +44,9 @@ class TaskServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private ProjectRepository projectRepository;
+
+    @Mock
     private UserService userService;
 
     @Mock
@@ -59,7 +64,7 @@ class TaskServiceTest {
         user.setId(1L);
         user.setRole(Role.USER);
 
-        TaskRequest task = new TaskRequest("task1", currentDate, 1L, null);
+        TaskRequest task = new TaskRequest("task1", currentDate, 1L, null, null);
 
         when(userService.getUserById(1L)).thenReturn(user);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -69,6 +74,7 @@ class TaskServiceTest {
 
         assertEquals("task1", result.getTitle());
         assertEquals(1L, result.getUserId());
+        assertEquals(null, result.getProject());;
     }
 
     @Test
@@ -79,7 +85,7 @@ class TaskServiceTest {
         admin.setRole(Role.ADMIN);
 
 
-        TaskRequest task = new TaskRequest("task1", currentDate, 1L, null);
+        TaskRequest task = new TaskRequest("task1", currentDate, 1L, null, null);
 
         when(userService.getUserById(1L)).thenReturn(admin);
         when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
@@ -102,7 +108,7 @@ class TaskServiceTest {
         user.setId(2L);
         user.setRole(Role.USER);
 
-        TaskRequest task = new TaskRequest("Admin task", currentDate, 2L, null);
+        TaskRequest task = new TaskRequest("Admin task", currentDate, 2L, null, null);
 
         when(userService.getUserById(1L)).thenReturn(admin);
         when(userRepository.findById(2L)).thenReturn(Optional.of(user));
@@ -126,7 +132,7 @@ class TaskServiceTest {
         user2.setId(2L);
         user2.setRole(Role.USER);
 
-        TaskRequest task = new TaskRequest("Second user task", currentDate, 2L, null);
+        TaskRequest task = new TaskRequest("Second user task", currentDate, 2L, null, null);
 
         when(userService.getUserById(1L)).thenReturn(user);
     
@@ -140,8 +146,8 @@ class TaskServiceTest {
         user.setId(1L);
         user.setRole(Role.USER);
 
-        TaskRequest oldRequest = new TaskRequest("task1", currentDate, 1L, null);
-        TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), 1L, null);
+        TaskRequest oldRequest = new TaskRequest("task1", currentDate, 1L, null, null);
+        TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), 1L, null, null);
 
         when(userService.getUserById(1L)).thenReturn(user);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -179,8 +185,8 @@ class TaskServiceTest {
         user.setId(2L);
         user.setRole(Role.USER);
 
-        TaskRequest oldRequest = new TaskRequest("task1", currentDate, 2L, null);
-        TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), 2L, null);
+        TaskRequest oldRequest = new TaskRequest("task1", currentDate, 2L, null, null);
+        TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), 2L, null, null);
 
         when(userService.getUserById(1L)).thenReturn(admin);
         when(userRepository.findById(2L)).thenReturn(Optional.of(user));
@@ -219,8 +225,8 @@ class TaskServiceTest {
         user2.setId(2L);
         user2.setRole(Role.USER);
 
-        TaskRequest oldRequest = new TaskRequest("task1", currentDate, 2L, null);
-        TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), 2L, null);
+        TaskRequest oldRequest = new TaskRequest("task1", currentDate, 2L, null, null);
+        TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), 2L, null, null);
 
         when(userService.getUserById(2L)).thenReturn(user2);
         when(userRepository.findById(2L)).thenReturn(Optional.of(user2));
@@ -582,6 +588,22 @@ class TaskServiceTest {
                 () -> taskService.getAllTasksByUserIdForUser(999L, 1L, Role.USER));
         
 
+    }
+
+    @Test
+    void getReport_shouldReturnReport() {
+
+        UserProjectTaskReport report =
+                new UserProjectTaskReport(1L, 1L, 5L);
+
+        when(taskRepository.getUserProjectTaskReport(null))
+                .thenReturn(List.of(report));
+
+        List<UserProjectTaskReport> result =
+                taskService.getReport(null, Role.ADMIN);
+
+        assertEquals(1, result.size());
+        assertEquals(5L, result.get(0).taskCount());
     }
 
     /*

@@ -60,7 +60,7 @@ class TaskUserIntegrationTest {
     @Test
     @DisplayName("Пользователь может создать задачу")
     void userCanCreateTask() {
-        TaskRequest request = new TaskRequest("Купить молоко", dueTime, testUserId, 0.5);
+        TaskRequest request = new TaskRequest("Купить молоко", dueTime, testUserId, 0.5, null);
         Task task = taskService.createTask(request, testUserId);
         
         assertNotNull(task.getId());
@@ -76,7 +76,7 @@ class TaskUserIntegrationTest {
     @Test
     @DisplayName("Нельзя создать задачу для несуществующего пользователя")
     void cannotCreateTaskForNonExistingUser() {
-        TaskRequest request = new TaskRequest("Задача", dueTime, 999L, 0.5);
+        TaskRequest request = new TaskRequest("Задача", dueTime, 999L, 0.5, null);
         
         assertThrows(RuntimeException.class, 
             () -> taskService.createTask(request, testUserId));
@@ -85,8 +85,8 @@ class TaskUserIntegrationTest {
     @Test
     @DisplayName("Пользователь может получить свои задачи")
     void userCanGetOwnTasks() {
-        taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.5), testUserId);
-        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.5), testUserId);
+        taskService.createTask(new TaskRequest("Задача 1", dueTime, testUserId, 0.5, null), testUserId);
+        taskService.createTask(new TaskRequest("Задача 2", dueTime, testUserId, 0.5, null), testUserId);
         
         List<Task> tasks = taskService.getAllTasksForUser(testUserId, Role.USER);
         
@@ -100,7 +100,7 @@ class TaskUserIntegrationTest {
         User userBefore = userService.getUserById(testUserId);
         assertFalse(userBefore.isTop());
         
-        TaskRequest request = new TaskRequest("Важная задача", dueTime, testUserId, 1.0);
+        TaskRequest request = new TaskRequest("Важная задача", dueTime, testUserId, 1.0, null);
         taskService.createTask(request, testUserId);
         
         User userAfter = userService.getUserById(testUserId);
@@ -110,7 +110,7 @@ class TaskUserIntegrationTest {
     @Test
     @DisplayName("Удаление задачи обновляет TOP статус пользователя")
     void deletingTaskUpdatesUserTopStatus() {
-        TaskRequest request = new TaskRequest("Важная задача", dueTime, testUserId, 1.0);
+        TaskRequest request = new TaskRequest("Важная задача", dueTime, testUserId, 1.0, null);
         Task task = taskService.createTask(request, testUserId);
         
         User userAfterCreate = userService.getUserById(testUserId);
@@ -125,12 +125,12 @@ class TaskUserIntegrationTest {
     @Test
     @DisplayName("Обновление рейтинга задачи обновляет TOP статус пользователя")
     void updatingTaskRatingUpdatesUserTopStatus() {
-        TaskRequest request = new TaskRequest("Обычная задача", dueTime, testUserId, 0.5);
+        TaskRequest request = new TaskRequest("Обычная задача", dueTime, testUserId, 0.5, null);
         Task task = taskService.createTask(request, testUserId);
         
         assertFalse(userService.getUserById(testUserId).isTop());
 
-        TaskRequest updateRequest = new TaskRequest("Обычная задача", dueTime, testUserId, 1.0);
+        TaskRequest updateRequest = new TaskRequest("Обычная задача", dueTime, testUserId, 1.0, null);
         taskService.updateTask(task.getId(), updateRequest, testUserId, Role.USER);
         
         assertTrue(userService.getUserById(testUserId).isTop());
@@ -139,7 +139,7 @@ class TaskUserIntegrationTest {
     @Test
     @DisplayName("Завершение задачи обновляет TOP статус пользователя")
     void completingTaskUpdatesUserTopStatus() {
-        TaskRequest request = new TaskRequest("Важная задача", dueTime, testUserId, 1.0);
+        TaskRequest request = new TaskRequest("Важная задача", dueTime, testUserId, 1.0, null);
         Task task = taskService.createTask(request, testUserId);
         
         assertTrue(userService.getUserById(testUserId).isTop());
