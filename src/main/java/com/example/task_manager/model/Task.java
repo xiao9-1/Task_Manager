@@ -29,7 +29,12 @@ public class Task {
     private Long updatedBy;
 
     private LocalDateTime updatedAt;
-    
+
+    @ManyToOne
+    @JoinColumn(name = "project_id", nullable = true)
+    private Project project;
+
+
     public Long getUserId() {
         return userId;
     }
@@ -131,6 +136,14 @@ public class Task {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Project getProject() {
+        return project;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
     }
 }
 
