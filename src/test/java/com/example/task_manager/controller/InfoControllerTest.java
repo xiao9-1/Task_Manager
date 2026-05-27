@@ -21,6 +21,7 @@ import com.example.task_manager.component.InfoService;
 
 
 @WebMvcTest(InfoController.class)
+@ActiveProfiles("test")
 @WithMockUser
 class InfoControllerTest {
 
