@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.example.task_manager.dto.AdminTaskResponse;
 import com.example.task_manager.dto.TaskDto;
@@ -13,6 +14,7 @@ import com.example.task_manager.dto.TaskResponse;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 
+@ActiveProfiles("test")
 public class TaskMapperTest {
 
     LocalDateTime currDate = LocalDateTime.now();

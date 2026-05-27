@@ -1,9 +1,7 @@
 package com.example.task_manager.service;
 
 import com.example.task_manager.dto.TaskRequest;
-import com.example.task_manager.dto.TaskResponse;
 import com.example.task_manager.dto.UserProjectTaskReport;
-import com.example.task_manager.model.Project;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
@@ -12,16 +10,16 @@ import com.example.task_manager.repository.ProjectRepository;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.exception.AccessDeniedException;
-import com.example.task_manager.exception.TaskNotFoundException;
-import com.example.task_manager.exception.UserNotFoundException;
+import com.example.task_manager.exception.ResourceNotFoundException;
+import com.example.task_manager.exception.ResourceNotFoundException;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -31,9 +29,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 @DisplayName("\n =======TaskService Unit Tests======= \n")
 class TaskServiceTest {
 
@@ -147,7 +145,7 @@ class TaskServiceTest {
         user.setRole(Role.USER);
 
         TaskRequest oldRequest = new TaskRequest("task1", currentDate, 1L, null, null);
-        TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), 1L, null, null);
+        TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), null, null, null);
 
         when(userService.getUserById(1L)).thenReturn(user);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -513,7 +511,7 @@ class TaskServiceTest {
 
         when(taskRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(TaskNotFoundException.class, () -> taskService.getTaskByIdForUser(999L, user.getId(), user.getRole()));
+        assertThrows(ResourceNotFoundException.class, () -> taskService.getTaskByIdForUser(999L, user.getId(), user.getRole()));
     }
 
     @Test
@@ -584,7 +582,7 @@ class TaskServiceTest {
 
         when(userRepository.existsById(999L)).thenReturn(false);
 
-        assertThrows(UserNotFoundException.class,
+        assertThrows(ResourceNotFoundException.class,
                 () -> taskService.getAllTasksByUserIdForUser(999L, 1L, Role.USER));
         
 
@@ -604,6 +602,70 @@ class TaskServiceTest {
 
         assertEquals(1, result.size());
         assertEquals(5L, result.get(0).taskCount());
+    }
+
+    @Test
+    @DisplayName("USER не может менять владельца задачи")
+    void userShouldNotBeAbleToChangeTaskOwner() {
+
+        User user = new User("user1", "user@test.ru");
+        user.setId(1L);
+        user.setRole(Role.USER);
+
+        Task task = new Task("task1", currentDate, 1L);
+        task.setId(10L);
+
+        TaskRequest request = new TaskRequest(
+                "updated title",
+                currentDate.plusDays(1),
+                2L,
+                null,
+                null
+        );
+
+        when(taskRepository.findById(10L)).thenReturn(Optional.of(task));
+
+        assertThrows(AccessDeniedException.class, () ->
+                taskService.updateTask(10L, request, user.getId(), Role.USER)
+        );
+    }
+
+    @Test
+    @DisplayName("ADMIN может менять владельца задачи")
+    void adminShouldBeAbleToChangeTaskOwner() {
+
+        User admin = new User("admin", "admin@test.ru");
+        admin.setId(99L);
+        admin.setRole(Role.ADMIN);
+
+        User newOwner = new User("user", "user@test.ru");
+        newOwner.setId(1L);
+        newOwner.setRole(Role.USER);
+
+        Task task = new Task("task1", currentDate, 2L);
+        task.setId(10L);
+
+        TaskRequest request = new TaskRequest(
+                "updated title",
+                currentDate.plusDays(1),
+                newOwner.getId(),   // смена владельца
+                null,
+                null
+        );
+
+        when(taskRepository.findById(10L)).thenReturn(Optional.of(task));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(newOwner));
+        when(taskRepository.save(any(Task.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        Task result = taskService.updateTask(
+                10L,
+                request,
+                admin.getId(),
+                Role.ADMIN
+        );
+
+        assertEquals(1L, result.getUserId());
     }
 
     /*
