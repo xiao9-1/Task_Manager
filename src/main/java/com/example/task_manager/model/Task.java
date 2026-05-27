@@ -39,6 +39,10 @@ public class Task {
         return userId;
     }
 
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
     public Task() {}
 
     public Task(String title, LocalDateTime dueTime) {
