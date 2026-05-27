@@ -4,7 +4,7 @@ import com.example.task_manager.model.User;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.dto.UserRequest;
-import com.example.task_manager.exception.UserNotFoundException;
+import com.example.task_manager.exception.ResourceNotFoundException;
 import com.example.task_manager.dto.AdminTaskResponse;
 import com.example.task_manager.dto.TaskResponse;
 import com.example.task_manager.model.Role;
@@ -52,7 +52,7 @@ public class UserService {
                 })
                 .orElseThrow(() -> {
                 log.warn("Пользователь с ID {} не найден", id);
-                return new UserNotFoundException("Пользователь с ID " + id + " не найден");
+                return new ResourceNotFoundException("Пользователь с ID " + id + " не найден");
                 });
         }
 
@@ -117,7 +117,7 @@ public class UserService {
             .getName();
 
         return userRepository.findByEmail(email)
-            .orElseThrow(() -> new UserNotFoundException("User not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 }
 
