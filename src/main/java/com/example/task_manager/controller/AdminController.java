@@ -2,8 +2,6 @@ package com.example.task_manager.controller;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,8 +17,6 @@ import com.example.task_manager.service.TaskService;
 @RequestMapping("/admin")
 public class AdminController {
 
-    private static final Logger log = LoggerFactory.getLogger(UserController.class);
-
     private final TaskService taskService;
     
     public AdminController(TaskService taskService) {
@@ -28,7 +24,6 @@ public class AdminController {
     }
 
     @GetMapping("/report/tasks")
-    @PreAuthorize("hasRole('ADMIN')")
     public List<UserProjectTaskReport> getReport(
             @RequestParam(required = false) Long userId,
             @AuthenticationPrincipal CustomUserDetails user)
