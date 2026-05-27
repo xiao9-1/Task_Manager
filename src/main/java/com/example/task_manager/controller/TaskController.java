@@ -1,16 +1,11 @@
 package com.example.task_manager.controller;
 
-import com.example.task_manager.dto.AdminTaskResponse;
 import com.example.task_manager.dto.TaskDto;
 import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.dto.TaskResponse;
-import com.example.task_manager.exception.AccessDeniedException;
-import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
-import com.example.task_manager.model.User;
 import com.example.task_manager.security.CustomUserDetails;
 import com.example.task_manager.service.TaskService;
-import com.example.task_manager.service.UserService;
 import com.example.task_manager.mapper.TaskMapper;
 
 import org.springframework.http.HttpStatus;
@@ -22,8 +17,6 @@ import org.springframework.web.bind.annotation.*;
 //import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import java.util.List;
-import java.util.Objects;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +38,6 @@ public class TaskController {
 
     // GET /tasks - получить все задачи
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
     public List<TaskDto> getAllTasks(@AuthenticationPrincipal CustomUserDetails user) {
         log.info("GET /tasks - userId={}, role={}", user.getId(), user.getRole());
 
@@ -59,7 +51,6 @@ public class TaskController {
 
     // GET /tasks/{id} - получить задачу по ID
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
     public TaskDto getTaskById(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user) {
         log.info("GET /tasks/id={} - userId={}, role={}", id, user.getId(), user.getRole());                                
         Task task = taskService.getTaskByIdForUser(id, user.getId(), user.getRole());
@@ -69,7 +60,6 @@ public class TaskController {
 
     // GET /tasks/user/{userId} - получить задачи конкретного пользователя
     @GetMapping("/user/{userId}")
-    @PreAuthorize("isAuthenticated()")
     public List<TaskDto> getUserTasks(@PathVariable Long userId, @AuthenticationPrincipal CustomUserDetails user) {
 
         log.info("GET /tasks/user/userId - userId={}, role={}", user.getId(), user.getRole());
@@ -87,7 +77,6 @@ public class TaskController {
 
     // POST /tasks - создать задачу
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<TaskResponse> createTask(@RequestBody TaskRequest request, @AuthenticationPrincipal CustomUserDetails user) {
 
         log.info("POST /tasks - userId={}, title={}", user.getId(), request.title());
@@ -100,7 +89,6 @@ public class TaskController {
 
     // POST /tasks/id/complete - завершить задачу
     @PostMapping("/{id}/complete")
-    @PreAuthorize("isAuthenticated()")
     public TaskResponse completeTask(@PathVariable Long id,
                                     @AuthenticationPrincipal CustomUserDetails user) {
 
@@ -117,7 +105,6 @@ public class TaskController {
 
     // PUT /tasks/{id} - обновить задачу
     @PutMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
     public TaskResponse updateTask(@PathVariable Long id,
                                 @RequestBody TaskRequest request,
                                 @AuthenticationPrincipal CustomUserDetails user) {
@@ -132,7 +119,6 @@ public class TaskController {
 
     // DELETE /tasks/{id} - удалить задачу
     @DeleteMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteTask(@PathVariable Long id,
                                         @AuthenticationPrincipal CustomUserDetails user) {
         log.info("DELETE /tasks/{} - userId={}", id, user.getId());

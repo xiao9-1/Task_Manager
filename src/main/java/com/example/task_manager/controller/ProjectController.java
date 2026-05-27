@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.task_manager.dto.ProjectRequest;
 import com.example.task_manager.dto.ProjectResponse;
 import com.example.task_manager.model.Project;
-import com.example.task_manager.repository.ProjectRepository;
 import com.example.task_manager.service.ProjectService;
 
 @RestController
@@ -25,7 +24,6 @@ public class ProjectController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ProjectResponse createProject(ProjectRequest request) {
 
         Project project = projectService.createProject(request);
