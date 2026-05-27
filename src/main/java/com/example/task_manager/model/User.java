@@ -1,9 +1,6 @@
 package com.example.task_manager.model;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
 import jakarta.persistence.*;
 
 @Entity
