@@ -17,8 +17,8 @@ public class GlobalExceptionHandler {
                 .body(ErrorDto.forbidden(e.getMessage()));
     }
 
-    @ExceptionHandler(TaskNotFoundException.class)
-    public ResponseEntity<ErrorDto> handleNotFound(TaskNotFoundException e) {
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleNotFound(ResourceNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorDto.notFound(e.getMessage()));
     }
@@ -27,11 +27,5 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorDto> handleBadRequest(IllegalArgumentException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorDto.badRequest(e.getMessage()));
-    }
-
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorDto> handleUserNotFound(UserNotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ErrorDto.notFound(e.getMessage()));
     }
 }
