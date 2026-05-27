@@ -7,8 +7,8 @@ import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.dto.TaskResponse;
 import com.example.task_manager.dto.UserProjectTaskReport;
 import com.example.task_manager.exception.AccessDeniedException;
-import com.example.task_manager.exception.TaskNotFoundException;
-import com.example.task_manager.exception.UserNotFoundException;
+import com.example.task_manager.exception.ResourceNotFoundException;
+import com.example.task_manager.exception.ResourceNotFoundException;
 import com.example.task_manager.mapper.TaskMapper;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Status;
@@ -55,6 +55,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 @WebMvcTest(TaskController.class)
+@ActiveProfiles("test")
 @DisplayName("Тесты TaskController")
 class TaskControllerTest {
 
@@ -275,7 +276,7 @@ class TaskControllerTest {
         authenticate(user(1L));
 
         when(taskService.getTaskByIdForUser(anyLong(), anyLong(), any(Role.class)))
-                .thenThrow(new TaskNotFoundException("Задача не найдена"));
+                .thenThrow(new ResourceNotFoundException("Задача не найдена"));
 
         mockMvc.perform(get("/tasks/999"))
                 .andExpect(status().isNotFound());
@@ -342,7 +343,7 @@ class TaskControllerTest {
         authenticate(user(1L));
 
         when(taskService.getAllTasksByUserIdForUser(anyLong(), anyLong(), any(Role.class)))
-                .thenThrow(new UserNotFoundException("Пользователь не найден"));
+                .thenThrow(new ResourceNotFoundException("Пользователь не найден"));
 
         mockMvc.perform(get("/tasks/user/999"))
                 .andExpect(status().isNotFound());
@@ -409,7 +410,7 @@ class TaskControllerTest {
                 eq(999L),
                 anyLong(),
                 any(Role.class)
-        )).thenThrow(new UserNotFoundException("Пользователь не найден"));
+        )).thenThrow(new ResourceNotFoundException("Пользователь не найден"));
 
         mockMvc.perform(get("/tasks/user/999"))
                 .andExpect(status().isNotFound())
