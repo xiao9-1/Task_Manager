@@ -1,9 +1,6 @@
 package com.example.task_manager.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -17,26 +14,29 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.test.context.support.WithUserDetails;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.task_manager.dto.UserProjectTaskReport;
-import com.example.task_manager.exception.AccessDeniedException;
 import com.example.task_manager.model.Role;
-import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
 import com.example.task_manager.security.CustomUserDetails;
+import com.example.task_manager.security.SecurityConfig;
+import com.example.task_manager.security.UserSecurityService;
 import com.example.task_manager.service.TaskService;
 
 @WebMvcTest(AdminController.class)
+@ActiveProfiles("test")
 @AutoConfigureMockMvc()
-@EnableMethodSecurity
+@Import(SecurityConfig.class)
 public class AdminControllerTest {
 
     @Autowired
@@ -44,6 +44,10 @@ public class AdminControllerTest {
 
     @MockitoBean
     private TaskService taskService;
+
+    @MockitoBean
+    private UserSecurityService userSecurityService;
+
 
     LocalDateTime currDate = LocalDateTime.now();
 
@@ -105,7 +109,7 @@ public class AdminControllerTest {
     @Test
     void getReport_user_shouldReturnForbidden() throws Exception {
 
-        authenticate(user(1L));
+       authenticate(user(1L)); 
 
         mockMvc.perform(get("/admin/report/tasks"))
                 .andExpect(status().isForbidden());
@@ -114,7 +118,6 @@ public class AdminControllerTest {
 
     @Test
     void getReport_unauthorized_shouldReturnUnauthorized() throws Exception {
-
 
         mockMvc.perform(get("/admin/report/tasks"))
                 .andExpect(status().isUnauthorized());
