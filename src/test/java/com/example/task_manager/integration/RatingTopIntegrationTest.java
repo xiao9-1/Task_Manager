@@ -15,8 +15,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import org.springframework.core.env.ConfigurableEnvironment;
 
+import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -40,8 +41,12 @@ class RatingTopIntegrationTest {
     private Long testUserId;
     private LocalDateTime dueTime;
 
+    @Autowired
+    private ConfigurableEnvironment environment;
+
     @BeforeEach
     void setUp() {
+        System.out.println(environment.getPropertySources());
 
         dueTime = LocalDateTime.now().plusDays(7);
 
@@ -107,11 +112,11 @@ class RatingTopIntegrationTest {
     @Test
     @DisplayName("TOP пересчитывается при обновлении рейтинга")
     void topRecalculatesWhenRatingUpdated() {
-        var task = taskService.createTask(new TaskRequest("Задача", dueTime, testUserId, 0.5, null), testUserId);
+        var task = taskService.createTask(new TaskRequest("Задача", dueTime, null, 0.5, null), testUserId);
         
         assertFalse(userService.getUserById(testUserId).isTop());
         
-        taskService.updateTask(task.getId(), new TaskRequest("Задача", dueTime, testUserId, 1.0, null), testUserId, Role.USER);
+        taskService.updateTask(task.getId(), new TaskRequest("Задача", dueTime, null, 1.0, null), testUserId, Role.USER);
         
         assertTrue(userService.getUserById(testUserId).isTop());
     }
@@ -132,4 +137,5 @@ class RatingTopIntegrationTest {
         assertTrue(userService.getUserById(testUserId).isTop());
         assertFalse(userService.getUserById(secondUserId).isTop());
     }
+
 }

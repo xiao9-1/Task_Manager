@@ -130,7 +130,7 @@ class TaskUserIntegrationTest {
         
         assertFalse(userService.getUserById(testUserId).isTop());
 
-        TaskRequest updateRequest = new TaskRequest("Обычная задача", dueTime, testUserId, 1.0, null);
+        TaskRequest updateRequest = new TaskRequest("Обычная задача", dueTime, null, 1.0, null);
         taskService.updateTask(task.getId(), updateRequest, testUserId, Role.USER);
         
         assertTrue(userService.getUserById(testUserId).isTop());
