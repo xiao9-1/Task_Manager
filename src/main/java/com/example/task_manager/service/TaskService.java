@@ -45,14 +45,6 @@ public class TaskService {
         this.userService = userService;
     }
 
-    private void validateTaskRequest(TaskRequest request) {
-        if (request.title() == null || request.title().trim().isEmpty()) {
-            throw new IllegalArgumentException("Заголовок не может быть пустым");
-        }
-
-        RatingValidator.validateRating(request.rating());
-    }
-
     private Long resolveOwnerId(TaskRequest request, User creator) {
 
         if (creator.getRole() == Role.ADMIN) {
@@ -124,7 +116,17 @@ public class TaskService {
         task.setUpdatedBy(userId);
     }
 
-    // GET все задачи
+    private Task saveTask(Task task, Double rating) {
+
+        applyRating(task, rating);
+        applyStatus(task);
+
+        Task saved = taskRepository.save(task);
+
+        userService.updateTopStatus(task.getUserId());
+
+        return saved;
+    }
 
     // POST Создать новую задачу Method updated 
     // Если не указывается ID автора задачи, то ID присваивается текущему пользователю
@@ -132,7 +134,11 @@ public class TaskService {
 
         log.info("Создание задачи: title='{}'", request.title());
 
-        validateTaskRequest(request);
+        if (request.title() == null || request.title().trim().isEmpty()) {
+            throw new IllegalArgumentException("Заголовок не может быть пустым");
+        }
+
+        RatingValidator.validateRating(request.rating());
 
         User creator = userService.getUserById(userId);
 
@@ -145,14 +151,11 @@ public class TaskService {
 
         applyProject(task, request.projectId());
         applyCreateAudit(task, creator.getId());
-        applyRating(task, request.rating());
-        applyStatus(task);
 
-        Task saved = taskRepository.save(task);
+        Task saved = saveTask(task, request.rating());
 
         owner.setTaskCount(owner.getTaskCount() + 1);
         userRepository.save(owner);
-        userService.updateTopStatus(ownerId);
 
         return saved;
     }
@@ -166,7 +169,6 @@ public class TaskService {
                 .orElseThrow(() -> new ResourceNotFoundException("Задача не найдена"));
 
         checkAccess(task, requesterId, role);
-
         applyBasicFields(task, request);
         applyProject(task, request.projectId());
 
@@ -176,21 +178,32 @@ public class TaskService {
                 throw new AccessDeniedException("Только админ может менять владельца задачи");
             }
 
-            User newOwner = userRepository.findById(request.userId())
+            Long oldUserId = task.getUserId();
+            Long newUserId = request.userId();
+
+            User oldOwner = userRepository.findById(oldUserId)
                     .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
 
-            task.setUserId(newOwner.getId());
+            User newOwner = userRepository.findById(newUserId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Пользователь не найден"));
+
+            if (!Objects.equals(oldUserId, newUserId)) {
+
+                oldOwner.setTaskCount(Math.max(0, oldOwner.getTaskCount() - 1));
+                newOwner.setTaskCount(newOwner.getTaskCount() + 1);
+
+                userRepository.save(oldOwner);
+                userRepository.save(newOwner);
+
+                task.setUserId(newUserId);
+
+                userService.updateTopStatus(oldUserId);
+            }
         }
 
         applyUpdateAudit(task, requesterId);
-        applyRating(task, request.rating());
-        applyStatus(task);
 
-        Task saved = taskRepository.save(task);
-
-        userService.updateTopStatus(task.getUserId());
-
-        return saved;
+        return saveTask(task, request.rating());
     }
 
     // DELETE Удалить задачу
@@ -288,5 +301,7 @@ public class TaskService {
             throw new AccessDeniedException("Пользователь не может смотреть отчет");
         }
     }
+
+
 }
 
