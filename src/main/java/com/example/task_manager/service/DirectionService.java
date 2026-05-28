@@ -9,7 +9,9 @@ import org.springframework.stereotype.Service;
 
 import com.example.task_manager.dto.DirectionRequest;
 import com.example.task_manager.dto.DirectionResponse;
+import com.example.task_manager.exception.ResourceNotFoundException;
 import com.example.task_manager.model.Direction;
+import com.example.task_manager.model.Project;
 import com.example.task_manager.repository.DirectionRepository;
 
 @Service
@@ -52,6 +54,13 @@ public class DirectionService {
 
         return directionRepository.findAll();
         
+    }
+
+    public Direction getDirectionById(Long directionId) {
+        log.info("Запрос проекта с ID: {}", directionId);
+
+        return directionRepository.findById(directionId)
+            .orElseThrow(() -> new ResourceNotFoundException("Проект с ID " + directionId + " не найден"));
     }
     
 }
