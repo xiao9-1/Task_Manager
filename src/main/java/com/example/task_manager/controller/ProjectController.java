@@ -4,7 +4,10 @@ import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -42,6 +45,17 @@ public class ProjectController {
                         p.getDirection().getId()
                 ))
                 .toList();
+    }
+
+    @PutMapping("/{id}")
+    public ProjectResponse updateProject(@PathVariable("id") Long projectId, @RequestBody ProjectRequest request) {
+
+        Project updatedProject = projectService.updateProject(projectId, request);
+
+        return new ProjectResponse(
+            updatedProject.getId(),
+            updatedProject.getName(),
+            updatedProject.getDirection().getId());
     }
 
     
