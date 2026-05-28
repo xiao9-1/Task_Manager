@@ -1,6 +1,7 @@
 package com.example.task_manager.model;
 
 import java.time.LocalDateTime;
+import java.time.LocalDateTime;
 import jakarta.persistence.*;
 
 @Entity 
@@ -17,14 +18,16 @@ public class Task {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    @Column(updatable = false)
     private LocalDateTime createdAt;
     private LocalDateTime dueTime;
     private LocalDateTime completedAt;
     private Double rating;
 
-    @Column(name = "user_id", insertable = true, updatable = false)
+    @Column(name = "user_id", insertable = true, updatable = true)
     private Long userId;
 
+    @Column(updatable = false)
     private Long createdBy;
     private Long updatedBy;
 
