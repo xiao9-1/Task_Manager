@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.example.task_manager.dto.ProjectRequest;
+import com.example.task_manager.exception.ResourceNotFoundException;
 import com.example.task_manager.model.Direction;
 import com.example.task_manager.model.Project;
 import com.example.task_manager.repository.DirectionRepository;
@@ -19,10 +20,12 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final DirectionRepository directionRepository;
+    private final DirectionService directionService;
 
-    public ProjectService(ProjectRepository projectRepository, DirectionRepository directionRepository) {
+    public ProjectService(ProjectRepository projectRepository, DirectionRepository directionRepository, DirectionService directionService) {
         this.projectRepository = projectRepository;
         this.directionRepository = directionRepository;
+        this.directionService = directionService;
     }
 
     public Project createProject(ProjectRequest request) {
@@ -59,6 +62,31 @@ public class ProjectService {
 
         return projectRepository.findAll();
         
+    }
+
+    public Project getProjectById(Long projectId) {
+        log.info("Запрос проекта с ID: {}", projectId);
+
+        return projectRepository.findById(projectId)
+            .orElseThrow(() -> new ResourceNotFoundException("Проект с ID " + projectId + " не найден"));
+    }
+
+    public Project updateProject(Long projectId, ProjectRequest request) {
+
+        log.info("Запрос на обновление проекта id={}", projectId);
+
+        Project project = getProjectById(projectId);
+
+        if (request.name() != null && !request.name().trim().isEmpty()) {
+            project.setName(request.name());
+        }
+
+        if (request.directionId() != null) {
+            Direction direction = directionService.getDirectionById(request.directionId());
+            project.setDirection(direction);
+        }
+
+        return projectRepository.save(project);
     }
     
 }
