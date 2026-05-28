@@ -1,6 +1,7 @@
 package com.example.task_manager.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.ArgumentMatchers.any;
@@ -8,6 +9,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -120,6 +122,45 @@ class ProjectControllerTest {
     @WithMockUser(roles = "USER")
     void createProject_user_shouldReturnForbidden() throws Exception {
         mockMvc.perform(post("/projects"))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(projectService);
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void updateProject_success() throws Exception {
+        Direction direction = new Direction();
+        direction.setId(2L);
+
+        Project project = new Project();
+        project.setId(1L);
+        project.setName("New Project");
+        project.setDirection(direction);
+
+        new ProjectRequest("New Project", 2L);
+
+        when(projectService.updateProject(eq(1L), any(ProjectRequest.class)))
+                .thenReturn(project);
+
+        mockMvc.perform(put("/projects/1").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "name": "New Project",
+                                "directionId": 2
+                            }
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("New Project"))
+                .andExpect(jsonPath("$.directionId").value(2));
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void updateProject_forbidden() throws Exception {
+        mockMvc.perform(post("/projects/1"))
                 .andExpect(status().isForbidden());
 
         verifyNoInteractions(projectService);
