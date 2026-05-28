@@ -39,6 +39,9 @@ public class ProjectServiceTest {
     @Mock
     private DirectionRepository directionRepository;
 
+    @Mock
+    private DirectionService directionService;
+
     @InjectMocks
     private ProjectService projectService;
 
@@ -124,6 +127,37 @@ public class ProjectServiceTest {
         List<Project> result = projectService.getAllProjects();
 
         assertEquals(2, result.size());
+    }
+
+    @Test
+    void updateProject_success() {
+
+        Direction direction = new Direction();
+        direction.setId(1L);
+        direction.setName("The first direction");
+
+        Direction newDirection = new Direction();
+        newDirection.setId(2L);
+        newDirection.setName("The first direction");
+
+        Project oldProject = new Project();
+        oldProject.setId(1L);
+        oldProject.setName("Old Proejct");
+        oldProject.setDirection(direction);
+
+        ProjectRequest request = new ProjectRequest("New Project", 2L);
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(oldProject));
+        when(directionService.getDirectionById(2L)).thenReturn(newDirection);
+
+        when(projectRepository.save(any(Project.class))).thenAnswer(inv -> inv.getArgument(0));
+
+       
+        Project newProject = projectService.updateProject(1L, request);
+
+        assertEquals("New Project", newProject.getName());
+        assertEquals(2L, newProject.getDirection().getId());
+
     }
 
 }

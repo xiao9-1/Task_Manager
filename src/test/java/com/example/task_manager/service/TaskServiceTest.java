@@ -653,8 +653,13 @@ class TaskServiceTest {
                 null
         );
 
+        User oldOwner = new User("old", "old@test.ru");
+        oldOwner.setId(2L);
+        oldOwner.setRole(Role.USER);
+
         when(taskRepository.findById(10L)).thenReturn(Optional.of(task));
         when(userRepository.findById(1L)).thenReturn(Optional.of(newOwner));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(oldOwner));
         when(taskRepository.save(any(Task.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
