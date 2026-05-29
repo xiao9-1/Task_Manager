@@ -1,7 +1,10 @@
 package com.example.task_manager.service;
 
+import com.example.task_manager.component.TimeConverter;
 import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.dto.UserProjectTaskReport;
+import com.example.task_manager.dto.UserTaskAgg;
+import com.example.task_manager.dto.UserTaskDailyStatsResponse;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
@@ -18,7 +21,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.cglib.core.Local;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
@@ -49,6 +55,9 @@ class TaskServiceTest {
 
     @Mock
     private StatusService statusService;
+
+    @Mock
+    private TimeConverter timeConverter;
 
     @InjectMocks
     private TaskService taskService;
@@ -673,14 +682,82 @@ class TaskServiceTest {
         assertEquals(1L, result.getUserId());
     }
 
-    /*
-    getAllTasksForUser + 
-    getTaskByIdForUser +
-    getAllTasksByUserIdForUser +
-    createTask + 
-    updateTask + 
-    deleteTask + 
-    completeTask +
-    */
+    @Test
+    void shouldCalculateStatsCorrectly() {
+
+        User user = new User();
+        user.setId(1L);
+        user.setRole(Role.ADMIN);
+        user.setTimeZone("Europe/Moscow");
+
+        Task t1 = new Task();
+        t1.setTitle("Task 1");
+        t1.setCreatedAt(LocalDateTime.parse("2026-05-01T10:00:00"));
+        t1.setUserId(1L);
+        Task t2 = new Task("Task 1", LocalDateTime.parse("2026-05-01T12:00:00"), 1L);
+        Task t3 = new Task("Task 2", LocalDateTime.parse("2026-05-02T10:00:00"), 1L);
+
+        when(userRepository.findAll()).thenReturn(List.of(user));
+        when(taskRepository.findAll()).thenReturn(List.of(t1, t2, t3));
+
+        when(taskRepository.getUtcStats())
+                .thenReturn(List.of(new UserTaskAgg(1L, 3, 2)));
+
+       when(timeConverter.toUserTime(any(), anyString()))
+        .thenAnswer(inv -> inv.getArgument(0));
+
+        List<UserTaskDailyStatsResponse> result =
+                taskService.getTasksPerDayStats(user.getRole());
+
+        assertEquals(1, result.size());
+
+        UserTaskDailyStatsResponse stats = result.get(0);
+
+        assertEquals(1.5, stats.averagePerDayUtc());
+        assertEquals(3.0, stats.averagePerDayLocal());
+    }
+
+    @Test
+    void shouldReturnZeroWhenNoTasks() {
+
+        when(userRepository.findAll()).thenReturn(List.of());
+
+        when(taskRepository.findAll()).thenReturn(List.of());
+        when(taskRepository.getUtcStats()).thenReturn(List.of());
+
+        List<UserTaskDailyStatsResponse> result =
+                taskService.getTasksPerDayStats(Role.ADMIN);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void shouldReturnOneWhenAllTasksInSameDay() {
+
+        User user = new User();
+        user.setId(1L);
+        user.setTimeZone("Europe/Moscow");
+        user.setRole(Role.ADMIN);
+
+        Task t1 = new Task();
+        t1.setTitle("Task 1");
+        t1.setCreatedAt(LocalDateTime.parse("2026-05-01T10:00:00"));
+        t1.setUserId(1L);
+        Task t2 = new Task("Task 1", LocalDateTime.parse("2026-05-01T12:00:00"), 1L);
+        Task t3 = new Task("Task 2", LocalDateTime.parse("2026-05-01T10:00:00"), 1L);
+
+        when(userRepository.findAll()).thenReturn(List.of(user));
+        when(taskRepository.findAll()).thenReturn(List.of(t1, t2, t3));
+        when(taskRepository.getUtcStats())
+                .thenReturn(List.of(new UserTaskAgg(1L, 3, 1)));
+
+        when(timeConverter.toUserTime(any(), anyString()))
+        .thenAnswer(inv -> inv.getArgument(0));
+
+        var result = taskService.getTasksPerDayStats(Role.ADMIN);
+
+        assertEquals(3.0, result.get(0).averagePerDayUtc());
+        assertEquals(3.0, result.get(0).averagePerDayLocal());
+    }
 
 }

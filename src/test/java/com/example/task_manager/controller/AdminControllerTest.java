@@ -1,5 +1,7 @@
 package com.example.task_manager.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -26,6 +28,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.task_manager.dto.UserProjectTaskReport;
+import com.example.task_manager.dto.UserTaskDailyStatsResponse;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.User;
 import com.example.task_manager.security.CustomUserDetails;
@@ -122,6 +125,35 @@ public class AdminControllerTest {
         mockMvc.perform(get("/admin/report/tasks"))
                 .andExpect(status().isUnauthorized());
 
+    }
+
+    @Test
+    void shouldReturnTasksPerDayStats() throws Exception {
+
+        authenticate(admin(1L));
+
+        List<UserTaskDailyStatsResponse> mockResponse = List.of(
+                new UserTaskDailyStatsResponse(
+                        1L,
+                        "Admin",
+                        "Europe/Moscow",
+                        1.5,
+                        3.0
+                )
+        );
+
+        when(taskService.getTasksPerDayStats(any()))
+                .thenReturn(mockResponse);
+
+        mockMvc.perform(get("/admin/report/tasks-per-day"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].userId").value(1L))
+                .andExpect(jsonPath("$[0].name").value("Admin"))
+                .andExpect(jsonPath("$[0].averagePerDayUtc").value(1.5))
+                .andExpect(jsonPath("$[0].averagePerDayLocal").value(3.0));
+
+        verify(taskService, times(1))
+                .getTasksPerDayStats(any());
     }
 
 
