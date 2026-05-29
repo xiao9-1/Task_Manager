@@ -145,7 +145,7 @@ public class UserControllerTest {
     @DisplayName("POST /users - USER не может создать нового пользователя -> 403")
     @WithMockUser(username = "user@test.com", roles = "USER")
     void user_CannotCreateUser_Returns403() throws Exception {
-        UserRequest request = new UserRequest("New User", "new@test.com", "123");
+        UserRequest request = new UserRequest("New User", "new@test.com", "123", "Europe/Moscow");
         
         mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)

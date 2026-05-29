@@ -40,6 +40,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
@@ -182,8 +183,7 @@ class TaskControllerTest {
         when(taskService.getAllTasksForUser(anyLong(), any()))
                 .thenReturn(List.of(task));
 
-        when(taskMapper.toDto(any(Task.class), eq(Role.USER)))
-                .thenReturn(dto);
+        when(taskMapper.toDto(any(), any(), any())).thenReturn(dto);
 
         mockMvc.perform(get("/tasks"))
                 .andExpect(status().isOk())
@@ -203,7 +203,7 @@ class TaskControllerTest {
         when(taskService.getAllTasksForUser(anyLong(), any()))
                 .thenReturn(List.of(task));
 
-        when(taskMapper.toDto(any(Task.class), eq(Role.ADMIN)))
+        when(taskMapper.toDto(any(Task.class), eq(Role.ADMIN), any()))
                 .thenReturn(dto);
 
         mockMvc.perform(get("/tasks"))
@@ -226,8 +226,7 @@ class TaskControllerTest {
         when(taskService.getTaskByIdForUser(eq(1L), eq(1L), eq(Role.USER)))
                 .thenReturn(task);
 
-        when(taskMapper.toDto(eq(task), eq(Role.USER)))
-                .thenReturn(dto);
+        when(taskMapper.toDto(any(), any(), any())).thenReturn(dto);
 
         mockMvc.perform(get("/tasks/1"))
                 .andExpect(status().isOk())
@@ -247,7 +246,7 @@ class TaskControllerTest {
         when(taskService.getTaskByIdForUser(eq(1L), eq(1L), eq(Role.ADMIN)))
                 .thenReturn(task);
 
-        when(taskMapper.toDto(eq(task), eq(Role.ADMIN)))
+        when(taskMapper.toDto(eq(task), eq(Role.ADMIN), any()))
                 .thenReturn(dto);
 
         mockMvc.perform(get("/tasks/1"))
@@ -294,7 +293,7 @@ class TaskControllerTest {
         when(taskService.getAllTasksByUserIdForUser(eq(1L), eq(1L), eq(Role.USER)))
                 .thenReturn(List.of(task));
 
-        when(taskMapper.toDto(any(Task.class), eq(Role.USER)))
+        when(taskMapper.toDto(any(Task.class), eq(Role.USER), any()))
                 .thenReturn(dto);
 
         mockMvc.perform(get("/tasks/user/1"))
@@ -315,7 +314,7 @@ class TaskControllerTest {
         when(taskService.getAllTasksByUserIdForUser(eq(2L), eq(1L), eq(Role.ADMIN)))
                 .thenReturn(List.of(task));
 
-        when(taskMapper.toDto(any(Task.class), eq(Role.ADMIN)))
+        when(taskMapper.toDto(any(Task.class), eq(Role.ADMIN), any()))
                 .thenReturn(dto);
 
         mockMvc.perform(get("/tasks/user/2"))

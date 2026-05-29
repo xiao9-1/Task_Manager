@@ -4,10 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 import java.time.LocalDateTime;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
+import com.example.task_manager.component.TimeConverter;
 import com.example.task_manager.dto.AdminTaskResponse;
 import com.example.task_manager.dto.TaskDto;
 import com.example.task_manager.dto.TaskResponse;
@@ -19,7 +24,16 @@ public class TaskMapperTest {
 
     LocalDateTime currDate = LocalDateTime.now();
 
-    private final TaskMapper taskMapper = new TaskMapper();
+
+    private TimeConverter timeConverter;
+
+    private TaskMapper taskMapper;
+
+    @BeforeEach
+    void setUp() {
+        timeConverter = new TimeConverter();
+        taskMapper = new TaskMapper(timeConverter);
+    }
 
     @Test
     @DisplayName("toDto() -> ADMIN получает AdminTaskResponse")
@@ -28,7 +42,7 @@ public class TaskMapperTest {
         Task task = new Task("task1", currDate, 1L);
         task.setId(1L);
 
-        TaskDto dto = taskMapper.toDto(task, Role.ADMIN);
+        TaskDto dto = taskMapper.toDto(task, Role.ADMIN, "Europe/Moscow");
 
         assertInstanceOf(AdminTaskResponse.class, dto);
     }
@@ -40,7 +54,7 @@ public class TaskMapperTest {
         Task task = new Task("task1", currDate, 1L);
         task.setId(1L);
 
-        TaskDto dto = taskMapper.toDto(task, Role.USER);
+        TaskDto dto = taskMapper.toDto(task, Role.USER,"Europe/Moscow");
 
         assertInstanceOf(TaskResponse.class, dto);
     }
