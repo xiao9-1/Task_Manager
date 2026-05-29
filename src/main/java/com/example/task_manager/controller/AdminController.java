@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.task_manager.dto.UserProjectTaskReport;
+import com.example.task_manager.dto.UserTaskDailyStatsResponse;
 import com.example.task_manager.security.CustomUserDetails;
 import com.example.task_manager.service.TaskService;
 
@@ -30,6 +31,12 @@ public class AdminController {
 
         {
         return taskService.getReport(userId, user.getRole());
+    }
+
+    @GetMapping("/report/tasks-per-day")
+    public List<UserTaskDailyStatsResponse> getTaskPerDay(@AuthenticationPrincipal CustomUserDetails user) {
+
+        return taskService.getTasksPerDayStats(user.getRole());
     }
     
 }
