@@ -1,8 +1,11 @@
 package com.example.task_manager.service;
 
+import com.example.task_manager.component.TimeConverter;
 import com.example.task_manager.dto.TaskDto;
 import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.dto.UserProjectTaskReport;
+import com.example.task_manager.dto.UserTaskAgg;
+import com.example.task_manager.dto.UserTaskDailyStatsResponse;
 import com.example.task_manager.exception.AccessDeniedException;
 import com.example.task_manager.exception.ResourceNotFoundException;
 import com.example.task_manager.exception.ResourceNotFoundException;
@@ -21,9 +24,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class TaskService {
@@ -35,14 +42,16 @@ public class TaskService {
     private final ProjectRepository projectRepository;
     private final StatusService statusService;
     private final UserService userService;
+    private final TimeConverter timeConverter;
 
 
-    public TaskService(TaskRepository taskRepository, UserRepository userRepository, StatusService statusService, UserService userService, ProjectRepository projectRepository) {
+    public TaskService(TaskRepository taskRepository, UserRepository userRepository, StatusService statusService, UserService userService, ProjectRepository projectRepository, TimeConverter timeConverter) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
         this.projectRepository = projectRepository;
         this.statusService = statusService;
         this.userService = userService;
+        this.timeConverter = timeConverter;
     }
 
     private Long resolveOwnerId(TaskRequest request, User creator) {
@@ -302,6 +311,62 @@ public class TaskService {
         }
     }
 
+    public List<UserTaskDailyStatsResponse> getTasksPerDayStats(Role role) {
+
+        if (role != Role.ADMIN) {
+            throw new AccessDeniedException("Только администратор может смотреть статистику");
+        }
+
+        List<User> users = userRepository.findAll();
+
+        Map<Long, List<Task>> tasksByUser =
+                taskRepository.findAll().stream()
+                        .collect(Collectors.groupingBy(Task::getUserId));
+
+        Map<Long, UserTaskAgg> statsByUser =
+                taskRepository.getUtcStats().stream()
+                        .collect(Collectors.toMap(UserTaskAgg::userId, s -> s));
+
+        return users.stream()
+                .map(user -> {
+
+                    UserTaskAgg agg = statsByUser.get(user.getId());
+
+                    long total = agg != null ? agg.totalTasks() : 0;
+                    long utcDays = agg != null ? agg.utcDays() : 0;
+
+                    List<Task> userTasks =
+                            tasksByUser.getOrDefault(user.getId(), List.of());
+
+                    long localDays = calculateLocalDays(user, userTasks);
+
+                    return new UserTaskDailyStatsResponse(
+                            user.getId(),
+                            user.getName(),
+                            user.getTimeZone(),
+                            utcDays == 0 ? 0 : (double) total / utcDays,
+                            localDays == 0 ? 0 : (double) total / localDays
+                    );
+                })
+                .toList();
+    }
+
+    private long calculateLocalDays(User user, List<Task> tasks) {
+
+        if (user.getTimeZone() == null) {
+            return 0;
+        }
+
+        return tasks.stream()
+                .map(t -> timeConverter.toUserTime(
+                        t.getCreatedAt(),
+                        user.getTimeZone()
+                ))
+                .filter(Objects::nonNull)
+                .map(LocalDateTime::toLocalDate)
+                .distinct()
+                .count();
+    }
 
 }
 
