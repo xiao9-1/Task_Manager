@@ -45,7 +45,7 @@ public class TaskController {
 
         return tasks
             .stream()
-            .map(task -> taskMapper.toDto(task, user.getRole())) 
+            .map(task -> taskMapper.toDto(task, user.getRole(), user.getTimeZone())) 
             .toList();
     }
 
@@ -55,7 +55,7 @@ public class TaskController {
         log.info("GET /tasks/id={} - userId={}, role={}", id, user.getId(), user.getRole());                                
         Task task = taskService.getTaskByIdForUser(id, user.getId(), user.getRole());
 
-        return taskMapper.toDto(task, user.getRole());
+        return taskMapper.toDto(task, user.getRole(), user.getTimeZone());
     }
 
     // GET /tasks/user/{userId} - получить задачи конкретного пользователя
@@ -68,7 +68,7 @@ public class TaskController {
 
         return tasks
             .stream()
-            .map(task -> taskMapper.toDto(task, user.getRole()))
+            .map(task -> taskMapper.toDto(task, user.getRole(), user.getTimeZone()))
             .toList();
 
     }

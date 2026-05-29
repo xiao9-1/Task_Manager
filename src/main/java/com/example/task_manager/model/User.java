@@ -1,6 +1,9 @@
 package com.example.task_manager.model;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.TimeZone;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -32,6 +35,9 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @Column(name = "time_zone")
+    private String TimeZone;
 
     public User() {}
 
@@ -113,4 +119,12 @@ public class User {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    public String getTimeZone() {
+        return TimeZone;
+    }
+
+    public void setTimeZone(String timeZone) {
+        TimeZone = timeZone;
+    }
 }

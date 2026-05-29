@@ -10,6 +10,7 @@ import com.example.task_manager.dto.TaskResponse;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.utils.EmailValidator;
+import com.example.task_manager.utils.TimeZoneValidator;
 
 import jakarta.transaction.Transactional;
 
@@ -73,8 +74,11 @@ public class UserService {
             throw new IllegalArgumentException("Пользователь с такой почтой уже существует.");
         }
 
+        TimeZoneValidator.validateTimeZone(request.timeZone());
+
         User user = new User(request.name(), request.email(), request.password());
         user.setRole(Role.USER);
+        user.setTimeZone(request.timeZone());
         User savedUser = userRepository.save(user);
         
         log.info("Пользователь успешно создан: ID={}, name='{}', email='{}', createdAt={}, taskCount={}, top={}", 

@@ -1,2 +1,5 @@
 ALTER TABLE tasks
 ADD COLUMN project_id BIGINT;
+
+ALTER TABLE users
+ADD COLUMN time_zone VARCHAR(50);
