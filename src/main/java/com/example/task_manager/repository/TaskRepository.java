@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.task_manager.dto.UserProjectTaskReport;
+import com.example.task_manager.dto.UserTaskAgg;
 import com.example.task_manager.model.Task;
 
 @Repository
@@ -24,5 +25,16 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     GROUP BY t.userId, t.project.id
     """)
     List<UserProjectTaskReport> getUserProjectTaskReport(@Param("userId") Long userId);
+
+    @Query("""
+    SELECT new com.example.task_manager.dto.UserTaskAgg(
+        t.userId,
+        COUNT(t),
+        COUNT(DISTINCT FUNCTION('date', t.createdAt))
+    )
+    FROM Task t
+    GROUP BY t.userId
+    """)
+    List<UserTaskAgg> getUtcStats();
 
 }
