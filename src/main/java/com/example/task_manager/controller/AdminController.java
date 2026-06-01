@@ -35,17 +35,32 @@ public class AdminController {
         return taskService.getReport(userId, user.getRole());
     }
 
-    @GetMapping("/report/tasks-per-hour")
-    public List<TasksPerHourResponse> getTasksPerHourReport(
+    @GetMapping("/report/tasks-per-hour/utc")
+    public List<TasksPerHourResponse> getTasksPerHourReportUtc(
             @RequestParam LocalDateTime from,
             @RequestParam LocalDateTime to,
             @AuthenticationPrincipal CustomUserDetails user
     ) {
 
-        return taskService.getTasksPerHourStats(
+        return taskService.getTasksPerHourStatsUtc(
                 from,
                 to,
                 user.getRole()
+        );
+    }
+
+    @GetMapping("/report/tasks-per-hour/local")
+    public List<TasksPerHourResponse> getTasksPerHourReportLocal(
+            @RequestParam LocalDateTime from,
+            @RequestParam LocalDateTime to,
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+
+        return taskService.getTasksPerHourStatsLocal(
+                from,
+                to,
+                user.getRole(),
+                user.getTimeZone()
         );
     }
 

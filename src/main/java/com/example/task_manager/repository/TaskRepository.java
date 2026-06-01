@@ -42,9 +42,32 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     ORDER BY hours.hour
     """,
     nativeQuery = true)
-    List<Object[]> getTasksPerHour(
+    List<Object[]> getTasksPerHourUtc(
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
+    );
+
+    @Query(value = """
+    SELECT
+        hours.hour::timestamp,
+        COUNT(t.id)
+    FROM generate_series(
+        :from,
+        :to,
+        interval '1 hour'
+    ) AS hours(hour)
+    LEFT JOIN tasks t
+        ON date_trunc(
+            'hour',
+            t.created_at AT TIME ZONE 'UTC' AT TIME ZONE :adminTimeZone
+        ) = hours.hour
+    GROUP BY hours.hour
+    ORDER BY hours.hour
+    """, nativeQuery = true)
+    List<Object[]> getTasksPerHourLocal(
+        @Param("from") LocalDateTime from,
+        @Param("to") LocalDateTime to,
+        @Param("adminTimeZone") String adminTimeZone
     );
 
 }

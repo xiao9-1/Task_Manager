@@ -17,12 +17,17 @@ import com.example.task_manager.utils.RatingValidator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.propertyeditors.ZoneIdEditor;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -104,9 +109,9 @@ public class TaskService {
 
     private void applyCreateAudit(Task task, Long userId) {
 
-        // TODO необходимо исправить отображение врмени LocalDateTime -> Instant
-
-        LocalDateTime now = LocalDateTime.now();
+        
+        // now = CurrentServerTime - MoscowTimeZone(- 3 hours)
+        LocalDateTime now = LocalDateTime.now(Clock.systemUTC());
 
         task.setCreatedAt(now);
         task.setCreatedBy(userId);
@@ -151,9 +156,16 @@ public class TaskService {
 
         User owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Владелец задачи не найден"));
+        
 
-        // TODO dueTime LocalDateTime.now() ->  instant.now()
-        Task task = new Task(request.title(), request.dueTime(), ownerId);
+        ZoneId userZone = ZoneId.of(owner.getTimeZone());
+        LocalDateTime local = request.dueTime();
+        ZonedDateTime zoned = local.atZone(userZone);
+        Instant utcInstant = zoned.toInstant();
+        LocalDateTime DueTimeUtc = LocalDateTime.ofInstant(utcInstant, ZoneOffset.UTC);
+
+        // DueTimeUtc = LocalDateTime + OwnerTimeZone -> UTC
+        Task task = new Task(request.title(), DueTimeUtc, ownerId);
 
         applyProject(task, request.projectId());
         applyCreateAudit(task, creator.getId());
@@ -308,7 +320,7 @@ public class TaskService {
         }
     }
 
-    public List<TasksPerHourResponse> getTasksPerHourStats(LocalDateTime from, LocalDateTime to, Role role) {
+    public List<TasksPerHourResponse> getTasksPerHourStatsUtc(LocalDateTime from, LocalDateTime to, Role role) {
 
         if (role != Role.ADMIN) {
             throw new AccessDeniedException(
@@ -319,7 +331,7 @@ public class TaskService {
             throw new IllegalArgumentException("Дата начала больше даты окончания");
         }
 
-        return taskRepository.getTasksPerHour(from, to)
+        return taskRepository.getTasksPerHourUtc(from, to)
                 .stream()
                 .map(row -> new TasksPerHourResponse(
                         ((Instant) row[0])
@@ -328,6 +340,29 @@ public class TaskService {
                         ((Number) row[1]).longValue()
                 ))
                 .toList();
+  
+    }
+
+    public List<TasksPerHourResponse> getTasksPerHourStatsLocal(LocalDateTime from, LocalDateTime to, Role role, String userTimeZone) {
+
+        if (role != Role.ADMIN) {
+            throw new AccessDeniedException(
+                    "Только администратор может смотреть статистику");
+        }
+
+        if (from.isAfter(to)) {
+            throw new IllegalArgumentException("Дата начала больше даты окончания");
+        }
+
+        return taskRepository.getTasksPerHourLocal(from, to, userTimeZone)
+            .stream()
+            .map(row -> new TasksPerHourResponse(
+                    ((Timestamp) row[0])
+                            .toLocalDateTime(),
+
+                    ((Number) row[1]).longValue()
+            ))
+            .toList();
   
     }
 }
