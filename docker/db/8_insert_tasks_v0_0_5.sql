@@ -1,8 +1,8 @@
 INSERT INTO tasks (title, status, created_at, due_time, completed_at, rating, user_id, project_id) VALUES
 ('Init project setup', 'COMPLETED_ON_TIME', '2026-05-01 20:00:00', '2026-05-02 09:00:00', '2026-05-02 08:30:00', 0.5, 1, 1),
 ('DB schema design', 'COMPLETED_LATE', '2026-05-01 21:00:00', '2026-05-03 10:00:00', '2026-05-04 12:00:00', 4, 2, 1),
-('Write specs', 'PENDING', '2026-05-01 23:40:00', '2026-05-04 00:20:00', NULL, 0, 0.3, 1),
-('Frontend layout', 'NOT_COMPLETED', '2026-05-01 12:00:00', '2026-05-03 12:00:00', NULL, 0, 0.4, 1);
+('Write specs', 'PENDING', '2026-05-01 23:40:00', '2026-05-04 00:20:00', NULL, 0, 3, 1),
+('Frontend layout', 'NOT_COMPLETED', '2026-05-01 12:00:00', '2026-05-03 12:00:00', NULL, 0, 4, 1);
 
 INSERT INTO tasks (title, status, created_at, due_time, completed_at, rating, user_id, project_id) VALUES
 ('API endpoint users', 'COMPLETED_ON_TIME', '2026-05-02 18:00:00', '2026-05-03 09:00:00', '2026-05-03 08:00:00', 0.5, 1, 1),
