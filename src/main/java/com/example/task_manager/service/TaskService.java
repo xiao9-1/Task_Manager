@@ -1,13 +1,10 @@
 package com.example.task_manager.service;
 
 import com.example.task_manager.component.TimeConverter;
-import com.example.task_manager.dto.TaskDto;
 import com.example.task_manager.dto.TaskRequest;
+import com.example.task_manager.dto.TasksPerHourResponse;
 import com.example.task_manager.dto.UserProjectTaskReport;
-import com.example.task_manager.dto.UserTaskAgg;
-import com.example.task_manager.dto.UserTaskDailyStatsResponse;
 import com.example.task_manager.exception.AccessDeniedException;
-import com.example.task_manager.exception.ResourceNotFoundException;
 import com.example.task_manager.exception.ResourceNotFoundException;
 import com.example.task_manager.model.Project;
 import com.example.task_manager.model.Role;
@@ -16,21 +13,18 @@ import com.example.task_manager.model.User;
 import com.example.task_manager.repository.ProjectRepository;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
-import com.example.task_manager.security.CustomUserDetails;
 import com.example.task_manager.utils.RatingValidator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class TaskService {
@@ -110,6 +104,8 @@ public class TaskService {
 
     private void applyCreateAudit(Task task, Long userId) {
 
+        // TODO необходимо исправить отображение врмени LocalDateTime -> Instant
+
         LocalDateTime now = LocalDateTime.now();
 
         task.setCreatedAt(now);
@@ -156,6 +152,7 @@ public class TaskService {
         User owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Владелец задачи не найден"));
 
+        // TODO dueTime LocalDateTime.now() ->  instant.now()
         Task task = new Task(request.title(), request.dueTime(), ownerId);
 
         applyProject(task, request.projectId());
@@ -311,62 +308,27 @@ public class TaskService {
         }
     }
 
-    public List<UserTaskDailyStatsResponse> getTasksPerDayStats(Role role) {
+    public List<TasksPerHourResponse> getTasksPerHourStats(LocalDateTime from, LocalDateTime to, Role role) {
 
         if (role != Role.ADMIN) {
-            throw new AccessDeniedException("Только администратор может смотреть статистику");
+            throw new AccessDeniedException(
+                    "Только администратор может смотреть статистику");
         }
 
-        List<User> users = userRepository.findAll();
-
-        Map<Long, List<Task>> tasksByUser =
-                taskRepository.findAll().stream()
-                        .collect(Collectors.groupingBy(Task::getUserId));
-
-        Map<Long, UserTaskAgg> statsByUser =
-                taskRepository.getUtcStats().stream()
-                        .collect(Collectors.toMap(UserTaskAgg::userId, s -> s));
-
-        return users.stream()
-                .map(user -> {
-
-                    UserTaskAgg agg = statsByUser.get(user.getId());
-
-                    long total = agg != null ? agg.totalTasks() : 0;
-                    long utcDays = agg != null ? agg.utcDays() : 0;
-
-                    List<Task> userTasks =
-                            tasksByUser.getOrDefault(user.getId(), List.of());
-
-                    long localDays = calculateLocalDays(user, userTasks);
-
-                    return new UserTaskDailyStatsResponse(
-                            user.getId(),
-                            user.getName(),
-                            user.getTimeZone(),
-                            utcDays == 0 ? 0 : (double) total / utcDays,
-                            localDays == 0 ? 0 : (double) total / localDays
-                    );
-                })
-                .toList();
-    }
-
-    private long calculateLocalDays(User user, List<Task> tasks) {
-
-        if (user.getTimeZone() == null) {
-            return 0;
+        if (from.isAfter(to)) {
+            throw new IllegalArgumentException("Дата начала больше даты окончания");
         }
 
-        return tasks.stream()
-                .map(t -> timeConverter.toUserTime(
-                        t.getCreatedAt(),
-                        user.getTimeZone()
+        return taskRepository.getTasksPerHour(from, to)
+                .stream()
+                .map(row -> new TasksPerHourResponse(
+                        ((Instant) row[0])
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDateTime(),
+                        ((Number) row[1]).longValue()
                 ))
-                .filter(Objects::nonNull)
-                .map(LocalDateTime::toLocalDate)
-                .distinct()
-                .count();
+                .toList();
+  
     }
-
 }
 

@@ -1,5 +1,6 @@
 package com.example.task_manager.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.task_manager.dto.TasksPerHourResponse;
 import com.example.task_manager.dto.UserProjectTaskReport;
 import com.example.task_manager.dto.UserTaskDailyStatsResponse;
 import com.example.task_manager.security.CustomUserDetails;
@@ -33,10 +35,20 @@ public class AdminController {
         return taskService.getReport(userId, user.getRole());
     }
 
-    @GetMapping("/report/tasks-per-day")
-    public List<UserTaskDailyStatsResponse> getTaskPerDay(@AuthenticationPrincipal CustomUserDetails user) {
+    @GetMapping("/report/tasks-per-hour")
+    public List<TasksPerHourResponse> getTasksPerHourReport(
+            @RequestParam LocalDateTime from,
+            @RequestParam LocalDateTime to,
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
 
-        return taskService.getTasksPerDayStats(user.getRole());
+        return taskService.getTasksPerHourStats(
+                from,
+                to,
+                user.getRole()
+        );
     }
+
+    
     
 }
