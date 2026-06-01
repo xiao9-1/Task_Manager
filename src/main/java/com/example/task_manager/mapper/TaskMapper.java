@@ -47,7 +47,7 @@ public class TaskMapper {
                     task.getProject() != null ? task.getProject().getId() : null
             );
         }
-
+        
         return new TaskResponse(
                 task.getId(),
                 task.getUserId(),
