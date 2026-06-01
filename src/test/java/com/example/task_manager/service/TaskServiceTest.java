@@ -687,7 +687,7 @@ class TaskServiceTest {
         Instant hour1 = Instant.parse("2026-05-01T10:00:00Z");
         Instant hour2 = Instant.parse("2026-05-01T11:00:00Z");
 
-        when(taskRepository.getTasksPerHour(from, to))
+        when(taskRepository.getTasksPerHourUtc(from, to))
                 .thenReturn(List.of(
                         new Object[]{hour1, 2L},
                         new Object[]{hour2, 5L}
@@ -695,7 +695,7 @@ class TaskServiceTest {
         
 
         List<TasksPerHourResponse> result =
-            taskService.getTasksPerHourStats(from, to, Role.ADMIN);
+            taskService.getTasksPerHourStatsUtc(from, to, Role.ADMIN);
         
         assertEquals(2, result.size());
 

@@ -148,7 +148,7 @@ public class AdminControllerTest {
                 )
         );
 
-        when(taskService.getTasksPerHourStats(any(), any(), any()))
+        when(taskService.getTasksPerHourStatsUtc(any(), any(), any()))
                 .thenReturn(serviceResult);
 
         mockMvc.perform(get("/admin/report/tasks-per-hour")
