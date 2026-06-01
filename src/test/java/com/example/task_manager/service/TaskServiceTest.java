@@ -2,9 +2,8 @@ package com.example.task_manager.service;
 
 import com.example.task_manager.component.TimeConverter;
 import com.example.task_manager.dto.TaskRequest;
+import com.example.task_manager.dto.TasksPerHourResponse;
 import com.example.task_manager.dto.UserProjectTaskReport;
-import com.example.task_manager.dto.UserTaskAgg;
-import com.example.task_manager.dto.UserTaskDailyStatsResponse;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
@@ -14,19 +13,16 @@ import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.exception.AccessDeniedException;
 import com.example.task_manager.exception.ResourceNotFoundException;
-import com.example.task_manager.exception.ResourceNotFoundException;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cglib.core.Local;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -683,81 +679,27 @@ class TaskServiceTest {
     }
 
     @Test
-    void shouldCalculateStatsCorrectly() {
+    void shouldReturnTasksPerHourStats() {
 
-        User user = new User();
-        user.setId(1L);
-        user.setRole(Role.ADMIN);
-        user.setTimeZone("Europe/Moscow");
+        LocalDateTime from = LocalDateTime.of(2026, 5, 1, 10, 0);
+        LocalDateTime to = LocalDateTime.of(2026, 5, 1, 12, 0);
 
-        Task t1 = new Task();
-        t1.setTitle("Task 1");
-        t1.setCreatedAt(LocalDateTime.parse("2026-05-01T10:00:00"));
-        t1.setUserId(1L);
-        Task t2 = new Task("Task 1", LocalDateTime.parse("2026-05-01T12:00:00"), 1L);
-        Task t3 = new Task("Task 2", LocalDateTime.parse("2026-05-02T10:00:00"), 1L);
+        Instant hour1 = Instant.parse("2026-05-01T10:00:00Z");
+        Instant hour2 = Instant.parse("2026-05-01T11:00:00Z");
 
-        when(userRepository.findAll()).thenReturn(List.of(user));
-        when(taskRepository.findAll()).thenReturn(List.of(t1, t2, t3));
+        when(taskRepository.getTasksPerHour(from, to))
+                .thenReturn(List.of(
+                        new Object[]{hour1, 2L},
+                        new Object[]{hour2, 5L}
+                ));
+        
 
-        when(taskRepository.getUtcStats())
-                .thenReturn(List.of(new UserTaskAgg(1L, 3, 2)));
+        List<TasksPerHourResponse> result =
+            taskService.getTasksPerHourStats(from, to, Role.ADMIN);
+        
+        assertEquals(2, result.size());
 
-       when(timeConverter.toUserTime(any(), anyString()))
-        .thenAnswer(inv -> inv.getArgument(0));
-
-        List<UserTaskDailyStatsResponse> result =
-                taskService.getTasksPerDayStats(user.getRole());
-
-        assertEquals(1, result.size());
-
-        UserTaskDailyStatsResponse stats = result.get(0);
-
-        assertEquals(1.5, stats.averagePerDayUtc());
-        assertEquals(3.0, stats.averagePerDayLocal());
+        assertEquals(2, result.get(0).taskCount());
+        assertEquals(5, result.get(1).taskCount());
     }
-
-    @Test
-    void shouldReturnZeroWhenNoTasks() {
-
-        when(userRepository.findAll()).thenReturn(List.of());
-
-        when(taskRepository.findAll()).thenReturn(List.of());
-        when(taskRepository.getUtcStats()).thenReturn(List.of());
-
-        List<UserTaskDailyStatsResponse> result =
-                taskService.getTasksPerDayStats(Role.ADMIN);
-
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void shouldReturnOneWhenAllTasksInSameDay() {
-
-        User user = new User();
-        user.setId(1L);
-        user.setTimeZone("Europe/Moscow");
-        user.setRole(Role.ADMIN);
-
-        Task t1 = new Task();
-        t1.setTitle("Task 1");
-        t1.setCreatedAt(LocalDateTime.parse("2026-05-01T10:00:00"));
-        t1.setUserId(1L);
-        Task t2 = new Task("Task 1", LocalDateTime.parse("2026-05-01T12:00:00"), 1L);
-        Task t3 = new Task("Task 2", LocalDateTime.parse("2026-05-01T10:00:00"), 1L);
-
-        when(userRepository.findAll()).thenReturn(List.of(user));
-        when(taskRepository.findAll()).thenReturn(List.of(t1, t2, t3));
-        when(taskRepository.getUtcStats())
-                .thenReturn(List.of(new UserTaskAgg(1L, 3, 1)));
-
-        when(timeConverter.toUserTime(any(), anyString()))
-        .thenAnswer(inv -> inv.getArgument(0));
-
-        var result = taskService.getTasksPerDayStats(Role.ADMIN);
-
-        assertEquals(3.0, result.get(0).averagePerDayUtc());
-        assertEquals(3.0, result.get(0).averagePerDayLocal());
-    }
-
 }

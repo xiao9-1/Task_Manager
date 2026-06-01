@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 import java.time.LocalDateTime;
@@ -27,6 +28,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.example.task_manager.dto.TasksPerHourResponse;
 import com.example.task_manager.dto.UserProjectTaskReport;
 import com.example.task_manager.dto.UserTaskDailyStatsResponse;
 import com.example.task_manager.model.Role;
@@ -128,34 +130,36 @@ public class AdminControllerTest {
     }
 
     @Test
-    void shouldReturnTasksPerDayStats() throws Exception {
+    void shouldReturnTasksPerHourReport() throws Exception {
 
         authenticate(admin(1L));
 
-        List<UserTaskDailyStatsResponse> mockResponse = List.of(
-                new UserTaskDailyStatsResponse(
-                        1L,
-                        "Admin",
-                        "Europe/Moscow",
-                        1.5,
-                        3.0
+        LocalDateTime from = LocalDateTime.of(2026, 1, 1, 10, 0);
+        LocalDateTime to = LocalDateTime.of(2026, 1, 1, 12, 0);
+
+        List<TasksPerHourResponse> serviceResult = List.of(
+                new TasksPerHourResponse(
+                        LocalDateTime.of(2026, 1, 1, 10, 0),
+                        5
+                ),
+                new TasksPerHourResponse(
+                        LocalDateTime.of(2026, 1, 1, 11, 0),
+                        8
                 )
         );
 
-        when(taskService.getTasksPerDayStats(any()))
-                .thenReturn(mockResponse);
+        when(taskService.getTasksPerHourStats(any(), any(), any()))
+                .thenReturn(serviceResult);
 
-        mockMvc.perform(get("/admin/report/tasks-per-day"))
+        mockMvc.perform(get("/admin/report/tasks-per-hour")
+                        .param("from", "2026-01-01T10:00:00")
+                        .param("to", "2026-01-01T12:00:00").with(csrf()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].userId").value(1L))
-                .andExpect(jsonPath("$[0].name").value("Admin"))
-                .andExpect(jsonPath("$[0].averagePerDayUtc").value(1.5))
-                .andExpect(jsonPath("$[0].averagePerDayLocal").value(3.0));
-
-        verify(taskService, times(1))
-                .getTasksPerDayStats(any());
+                .andExpect(jsonPath("$[0].hour").value("2026-01-01T10:00:00"))
+                .andExpect(jsonPath("$[0].taskCount").value(5))
+                .andExpect(jsonPath("$[1].hour").value("2026-01-01T11:00:00"))
+                .andExpect(jsonPath("$[1].taskCount").value(8));
     }
-
 
     
 }
