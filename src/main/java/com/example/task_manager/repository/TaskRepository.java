@@ -1,5 +1,6 @@
 package com.example.task_manager.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -7,7 +8,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.task_manager.dto.UserProjectTaskReport;
-import com.example.task_manager.dto.UserTaskAgg;
 import com.example.task_manager.model.Task;
 
 @Repository
@@ -26,15 +26,25 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     """)
     List<UserProjectTaskReport> getUserProjectTaskReport(@Param("userId") Long userId);
 
-    @Query("""
-    SELECT new com.example.task_manager.dto.UserTaskAgg(
-        t.userId,
-        COUNT(t),
-        COUNT(DISTINCT FUNCTION('date', t.createdAt))
-    )
-    FROM Task t
-    GROUP BY t.userId
-    """)
-    List<UserTaskAgg> getUtcStats();
+    @Query(value = """
+   SELECT
+        hours.hour,
+        COUNT(t.id)
+    FROM generate_series(
+        :from,
+        :to,
+        interval '1 hour'
+    ) AS hours(hour)
+    LEFT JOIN tasks t
+        ON t.created_at >= hours.hour
+   AND t.created_at < hours.hour + interval '1 hour'
+    GROUP BY hours.hour
+    ORDER BY hours.hour
+    """,
+    nativeQuery = true)
+    List<Object[]> getTasksPerHour(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to
+    );
 
 }
