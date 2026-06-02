@@ -53,6 +53,7 @@ class RatingTopIntegrationTest {
         User user = new User("Тестовый пользователь", "test@test.com");
         user.setPassword("{noop}password");
         user.setRole(Role.USER);
+        user.setTimeZone("Europe/Moscow");
 
         user = userRepository.save(user);
 
@@ -127,6 +128,7 @@ class RatingTopIntegrationTest {
         User user2 = new User("Второй", "second@test.com");
         user2.setPassword("{noop}password");
         user2.setRole(Role.USER);
+        user2.setTimeZone("Europe/Moscow");
         user2 = userRepository.save(user2);
         Long secondUserId = user2.getId();
 

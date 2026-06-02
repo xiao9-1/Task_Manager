@@ -53,6 +53,7 @@ class TaskUserIntegrationTest {
         User user = new User("Тестовый пользователь", "test@test.com");
         user.setPassword("{noop}password");
         user.setRole(Role.USER);
+        user.setTimeZone("Europe/Moscow");
         user = userRepository.save(user);
         testUserId = user.getId();
     }
