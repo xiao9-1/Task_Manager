@@ -66,6 +66,7 @@ class TaskServiceTest {
         User user = new User("user1", "user@test.ru");
         user.setId(1L);
         user.setRole(Role.USER);
+        user.setTimeZone("Europe/Moscow");
 
         TaskRequest task = new TaskRequest("task1", currentDate, 1L, null, null);
 
@@ -86,6 +87,7 @@ class TaskServiceTest {
         User admin = new User("admin", "admin@test.ru");
         admin.setId(1L);
         admin.setRole(Role.ADMIN);
+        admin.setTimeZone("Europe/Moscow");
 
 
         TaskRequest task = new TaskRequest("task1", currentDate, 1L, null, null);
@@ -106,10 +108,12 @@ class TaskServiceTest {
         User admin = new User("admin", "admin@test.ru");
         admin.setId(1L);
         admin.setRole(Role.ADMIN);
+        admin.setTimeZone("Europe/Moscow");
 
         User user = new User("user", "user@test.ru");
         user.setId(2L);
         user.setRole(Role.USER);
+        user.setTimeZone("Europe/Moscow");
 
         TaskRequest task = new TaskRequest("Admin task", currentDate, 2L, null, null);
 
@@ -130,10 +134,12 @@ class TaskServiceTest {
         User user = new User("user1", "user1@test.ru");
         user.setId(1L);
         user.setRole(Role.USER);
+        user.setTimeZone("Europe/Moscow");
 
         User user2 = new User("user2", "user2@test.ru");
         user2.setId(2L);
         user2.setRole(Role.USER);
+        user2.setTimeZone("Europe/Moscow");
 
         TaskRequest task = new TaskRequest("Second user task", currentDate, 2L, null, null);
 
@@ -148,6 +154,7 @@ class TaskServiceTest {
         User user = new User("user1", "user@test.ru");
         user.setId(1L);
         user.setRole(Role.USER);
+        user.setTimeZone("Europe/Moscow");
 
         TaskRequest oldRequest = new TaskRequest("task1", currentDate, 1L, null, null);
         TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), null, null, null);
@@ -183,10 +190,12 @@ class TaskServiceTest {
         User admin = new User("admin", "user@test.ru");
         admin.setId(1L);
         admin.setRole(Role.ADMIN);
+        admin.setTimeZone("Europe/Moscow");
 
         User user = new User("user1", "user@test.ru");
         user.setId(2L);
         user.setRole(Role.USER);
+        user.setTimeZone("Europe/Moscow");
 
         TaskRequest oldRequest = new TaskRequest("task1", currentDate, 2L, null, null);
         TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), 2L, null, null);
@@ -223,10 +232,12 @@ class TaskServiceTest {
         User user = new User("user1", "user@test.ru");
         user.setId(1L);
         user.setRole(Role.USER);
+        user.setTimeZone("Europe/Moscow");
 
         User user2 = new User("user2", "user@test.ru");
         user2.setId(2L);
         user2.setRole(Role.USER);
+        user2.setTimeZone("Europe/Moscow");
 
         TaskRequest oldRequest = new TaskRequest("task1", currentDate, 2L, null, null);
         TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), 2L, null, null);
