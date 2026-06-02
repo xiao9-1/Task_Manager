@@ -216,7 +216,7 @@ public class TaskRepositoryContainerTest extends AbstractIntegrationTest {
 
         Task t3 = new Task();
         t3.setTitle("t3");
-        t3.setCreatedAt(LocalDateTime.of(2026, 6, 1, 12, 05));
+        t3.setCreatedAt(LocalDateTime.of(2026, 6, 1, 12, 5));
         em.persist(t3);
 
         em.flush();
