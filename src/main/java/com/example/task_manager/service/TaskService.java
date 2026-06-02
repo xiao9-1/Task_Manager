@@ -269,6 +269,8 @@ public class TaskService {
         task.setCompletedAt(LocalDateTime.now());
         task.setStatus(statusService.getCurrentStatus(task));
 
+        applyUpdateAudit(task, userId);
+
         Task savedTask = taskRepository.save(task);
 
         userService.updateTopStatus(task.getUserId());
@@ -365,5 +367,7 @@ public class TaskService {
             .toList();
   
     }
+
+    
 }
 
