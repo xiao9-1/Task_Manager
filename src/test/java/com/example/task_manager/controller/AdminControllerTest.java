@@ -1,6 +1,8 @@
 package com.example.task_manager.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -134,9 +136,6 @@ public class AdminControllerTest {
 
         authenticate(admin(1L));
 
-        LocalDateTime from = LocalDateTime.of(2026, 1, 1, 10, 0);
-        LocalDateTime to = LocalDateTime.of(2026, 1, 1, 12, 0);
-
         List<TasksPerHourResponse> serviceResult = List.of(
                 new TasksPerHourResponse(
                         LocalDateTime.of(2026, 1, 1, 10, 0),
@@ -151,7 +150,7 @@ public class AdminControllerTest {
         when(taskService.getTasksPerHourStatsUtc(any(), any(), any()))
                 .thenReturn(serviceResult);
 
-        mockMvc.perform(get("/admin/report/tasks-per-hour")
+        mockMvc.perform(get("/admin/report/tasks-per-hour/utc")
                         .param("from", "2026-01-01T10:00:00")
                         .param("to", "2026-01-01T12:00:00").with(csrf()))
                 .andExpect(status().isOk())
@@ -159,6 +158,49 @@ public class AdminControllerTest {
                 .andExpect(jsonPath("$[0].taskCount").value(5))
                 .andExpect(jsonPath("$[1].hour").value("2026-01-01T11:00:00"))
                 .andExpect(jsonPath("$[1].taskCount").value(8));
+    }
+
+    @Test
+    void shouldReturnTasksPerHourReportLocal() throws Exception {
+
+        User user = admin(1L);
+        user.setTimeZone("Asia/Tokyo");
+        authenticate(user);
+
+        List<TasksPerHourResponse> serviceResult = List.of(
+                new TasksPerHourResponse(
+                        LocalDateTime.of(2026, 1, 1, 19, 0), // Tokyo shifted
+                        5
+                ),
+                new TasksPerHourResponse(
+                        LocalDateTime.of(2026, 1, 1, 20, 0),
+                        8
+                )
+        );
+
+        when(taskService.getTasksPerHourStatsLocal(
+                any(),
+                any(),
+                any(),
+                anyString()
+        )).thenReturn(serviceResult);
+
+        mockMvc.perform(get("/admin/report/tasks-per-hour/local")
+                        .param("from", "2026-01-01T10:00:00")
+                        .param("to", "2026-01-01T12:00:00")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].hour").value("2026-01-01T19:00:00"))
+                .andExpect(jsonPath("$[0].taskCount").value(5))
+                .andExpect(jsonPath("$[1].hour").value("2026-01-01T20:00:00"))
+                .andExpect(jsonPath("$[1].taskCount").value(8));
+
+        verify(taskService).getTasksPerHourStatsLocal(
+                any(),
+                any(),
+                any(),
+                eq("Asia/Tokyo")
+        );
     }
 
     
