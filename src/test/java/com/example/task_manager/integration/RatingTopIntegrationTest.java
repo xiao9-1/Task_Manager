@@ -7,6 +7,7 @@ import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.service.TaskService;
 import com.example.task_manager.service.UserService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.annotation.DirtiesContext;
 
 import org.springframework.core.env.ConfigurableEnvironment;
 
@@ -21,10 +23,11 @@ import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@ActiveProfiles("test")
+//@ActiveProfiles("test")
 @Transactional
 @DisplayName("Rating and TOP Status Integration Tests")
-class RatingTopIntegrationTest {
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+class RatingTopIntegrationTest extends AbstractIntegrationTest{
 
     @Autowired
     private TaskService taskService;

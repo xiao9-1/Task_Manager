@@ -18,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,11 +26,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@ActiveProfiles("test")
+//@ActiveProfiles("test")
 @Transactional
 @Rollback
 @DisplayName("Task and User Integration Tests")
-class TaskUserIntegrationTest {
+class TaskUserIntegrationTest extends AbstractIntegrationTest{
 
     @Autowired
     private TaskService taskService;
