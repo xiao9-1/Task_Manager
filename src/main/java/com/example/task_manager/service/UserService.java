@@ -5,8 +5,6 @@ import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
 import com.example.task_manager.dto.UserRequest;
 import com.example.task_manager.exception.ResourceNotFoundException;
-import com.example.task_manager.dto.AdminTaskResponse;
-import com.example.task_manager.dto.TaskResponse;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.utils.EmailValidator;
@@ -22,7 +20,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-//@Transactional
 public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);

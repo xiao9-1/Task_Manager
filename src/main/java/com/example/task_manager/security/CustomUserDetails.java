@@ -16,8 +16,6 @@ public class CustomUserDetails implements UserDetails {
 
     private String timeZone;
 
-    //private Role role;
-
     public CustomUserDetails(User user) {
         this.user = user;
     }

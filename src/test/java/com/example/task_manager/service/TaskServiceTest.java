@@ -4,6 +4,8 @@ import com.example.task_manager.component.TimeConverter;
 import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.dto.TasksPerHourResponse;
 import com.example.task_manager.dto.UserProjectTaskReport;
+import com.example.task_manager.exception.AccessDeniedException;
+import com.example.task_manager.exception.ResourceNotFoundException;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
@@ -11,16 +13,12 @@ import com.example.task_manager.model.User;
 import com.example.task_manager.repository.ProjectRepository;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
-import com.example.task_manager.exception.AccessDeniedException;
-import com.example.task_manager.exception.ResourceNotFoundException;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -29,7 +27,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)

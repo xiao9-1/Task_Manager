@@ -3,7 +3,6 @@ package com.example.task_manager.controller;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.task_manager.dto.TasksPerHourResponse;
 import com.example.task_manager.dto.UserProjectTaskReport;
-import com.example.task_manager.dto.UserTaskDailyStatsResponse;
 import com.example.task_manager.security.CustomUserDetails;
 import com.example.task_manager.service.TaskService;
 

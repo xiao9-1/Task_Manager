@@ -1,32 +1,25 @@
 package com.example.task_manager.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-
-import java.util.List;
-import java.util.Optional;
-
+import com.example.task_manager.dto.ProjectRequest;
+import com.example.task_manager.model.Direction;
+import com.example.task_manager.model.Project;
+import com.example.task_manager.repository.DirectionRepository;
+import com.example.task_manager.repository.ProjectRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
-import com.example.task_manager.dto.ProjectRequest;
-import com.example.task_manager.model.Direction;
-import com.example.task_manager.model.Project;
-import com.example.task_manager.repository.DirectionRepository;
-import com.example.task_manager.repository.ProjectRepository;
-import com.example.task_manager.security.UserSecurityService;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("\n =======ProjectService Unit Tests======= \n")

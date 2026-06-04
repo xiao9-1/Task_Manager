@@ -4,14 +4,11 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import com.example.task_manager.dto.DirectionRequest;
-import com.example.task_manager.dto.DirectionResponse;
 import com.example.task_manager.exception.ResourceNotFoundException;
 import com.example.task_manager.model.Direction;
-import com.example.task_manager.model.Project;
 import com.example.task_manager.repository.DirectionRepository;
 
 @Service
