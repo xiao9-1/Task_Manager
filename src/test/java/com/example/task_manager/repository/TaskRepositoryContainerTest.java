@@ -7,6 +7,7 @@ import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
@@ -24,9 +25,6 @@ public class TaskRepositoryContainerTest extends AbstractIntegrationTest {
     @Autowired
     TaskRepository taskRepository;
 
-    @PersistenceContext
-    EntityManager em;
-
     @Test
     void firstTest() {
 
@@ -34,9 +32,7 @@ public class TaskRepositoryContainerTest extends AbstractIntegrationTest {
         task.setTitle("test");
         task.setCreatedAt(LocalDateTime.of(2026, 6, 1, 11, 0));
 
-        em.persist(task);
-        em.flush();
-        em.clear();
+        taskRepository.save(task);
 
         var result = taskRepository.getTasksPerHourLocal(
                 LocalDateTime.of(2026, 6, 1, 0, 0),
@@ -54,20 +50,18 @@ public class TaskRepositoryContainerTest extends AbstractIntegrationTest {
         Task t1 = new Task();
         t1.setTitle("t1");
         t1.setCreatedAt(LocalDateTime.of(2026, 6, 1, 11, 10));
-        em.persist(t1);
 
         Task t2 = new Task();
         t2.setTitle("t2");
         t2.setCreatedAt(LocalDateTime.of(2026, 6, 1, 11, 20));
-        em.persist(t2);
 
         Task t3 = new Task();
         t3.setTitle("t3");
         t3.setCreatedAt(LocalDateTime.of(2026, 6, 1, 11, 30));
-        em.persist(t3);
 
-        em.flush();
-        em.clear();
+        taskRepository.save(t1);
+        taskRepository.save(t2);
+        taskRepository.save(t3);
 
         LocalDateTime from = LocalDateTime.of(2026, 6, 1, 0, 0);
         LocalDateTime to = LocalDateTime.of(2026, 6, 2, 0, 0);
@@ -106,9 +100,7 @@ public class TaskRepositoryContainerTest extends AbstractIntegrationTest {
         // UTC время (11:00 UTC)
         task.setCreatedAt(LocalDateTime.of(2026, 6, 1, 11, 0));
 
-        em.persist(task);
-        em.flush();
-        em.clear();
+        taskRepository.save(task);
 
         LocalDateTime from = LocalDateTime.of(2026, 6, 1, 0, 0);
         LocalDateTime to = LocalDateTime.of(2026, 6, 2, 0, 0);
@@ -142,15 +134,14 @@ public class TaskRepositoryContainerTest extends AbstractIntegrationTest {
         Task t1 = new Task();
         t1.setTitle("t1");
         t1.setCreatedAt(LocalDateTime.of(2026, 6, 1, 11, 10));
-        em.persist(t1);
+
 
         Task t2 = new Task();
         t2.setTitle("t2");
         t2.setCreatedAt(LocalDateTime.of(2026, 6, 1, 11, 20));
-        em.persist(t2);
 
-        em.flush();
-        em.clear();
+        taskRepository.save(t1);
+        taskRepository.save(t2);
 
         LocalDateTime from = LocalDateTime.of(2026, 6, 1, 0, 0);
         LocalDateTime to = LocalDateTime.of(2026, 6, 2, 0, 0);
@@ -179,7 +170,8 @@ public class TaskRepositoryContainerTest extends AbstractIntegrationTest {
         Task t = new Task();
         t.setTitle("t1");
         t.setCreatedAt(LocalDateTime.of(2026, 6, 1, 15, 0)); // UTC
-        em.persist(t);
+
+        taskRepository.save(t);
 
         LocalDateTime from = LocalDateTime.of(2026, 6, 1, 0, 0);
         LocalDateTime to = LocalDateTime.of(2026, 6, 2, 0, 0);
@@ -207,20 +199,18 @@ public class TaskRepositoryContainerTest extends AbstractIntegrationTest {
         Task t1 = new Task();
         t1.setTitle("t1");
         t1.setCreatedAt(LocalDateTime.of(2026, 6, 1, 11, 10));
-        em.persist(t1);
 
         Task t2 = new Task();
         t2.setTitle("t2");
         t2.setCreatedAt(LocalDateTime.of(2026, 6, 1, 11, 20));
-        em.persist(t2);
 
         Task t3 = new Task();
         t3.setTitle("t3");
         t3.setCreatedAt(LocalDateTime.of(2026, 6, 1, 12, 5));
-        em.persist(t3);
 
-        em.flush();
-        em.clear();
+        taskRepository.save(t1);
+        taskRepository.save(t2);
+        taskRepository.save(t3);
 
         LocalDateTime from = LocalDateTime.of(2026, 6, 1, 0, 0);
         LocalDateTime to = LocalDateTime.of(2026, 6, 2, 0, 0);
@@ -247,10 +237,8 @@ public class TaskRepositoryContainerTest extends AbstractIntegrationTest {
         Task task = new Task();
         task.setTitle("t1");
         task.setCreatedAt(LocalDateTime.of(2026, 6, 1, 11, 10));
-        em.persist(task);
 
-        em.flush();
-        em.clear();
+        taskRepository.save(task);
 
         LocalDateTime from = LocalDateTime.of(2026, 6, 1, 0, 0);
         LocalDateTime to = LocalDateTime.of(2026, 6, 1, 3, 0);
