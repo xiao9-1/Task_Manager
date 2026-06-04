@@ -10,7 +10,6 @@ import org.testcontainers.utility.MountableFile;
 
 @Testcontainers
 @SpringBootTest
-//@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class AbstractIntegrationTest {
 
     @Container
