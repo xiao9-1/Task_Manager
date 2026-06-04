@@ -14,7 +14,7 @@ public class CustomUserDetails implements UserDetails {
 
     private final User user;
 
-    //private Role role;
+    private String timeZone;
 
     public CustomUserDetails(User user) {
         this.user = user;
@@ -30,6 +30,10 @@ public class CustomUserDetails implements UserDetails {
 
     public Role getRole() {
         return user.getRole();
+    }
+
+    public String getTimeZone() {
+        return user.getTimeZone();
     }
 
     @Override

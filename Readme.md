@@ -4,7 +4,7 @@
 Проект для управления задач пользователей с использованием Spring Boot и хранением в PostgreSQL
 
 ## Технологии
-- Java 17
+- Java 21
 - Spring Boot
 - PostgreSQL
 - Docker

@@ -12,7 +12,8 @@ public record TaskResponse(
     Status status, 
     LocalDateTime dueTime, 
     LocalDateTime completedAt,
-    Double rating
+    Double rating,
+    Long projectId
 ) implements TaskDto {
 
     public static TaskResponse from(Task task) {
@@ -23,7 +24,8 @@ public record TaskResponse(
             task.getStatus(),
             task.getDueTime(),
             task.getCompletedAt(),
-            task.getRating()
+            task.getRating(),
+            task.getProject() != null ? task.getProject().getId() : null
         );
     }
 }

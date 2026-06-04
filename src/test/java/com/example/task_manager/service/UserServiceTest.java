@@ -1,15 +1,12 @@
 package com.example.task_manager.service;
 
 import com.example.task_manager.dto.UserRequest;
-import com.example.task_manager.exception.UserNotFoundException;
+import com.example.task_manager.exception.ResourceNotFoundException;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
-
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
-
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,21 +19,14 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.net.Authenticator;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("=======UserServiceTest=======")
@@ -67,7 +57,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("createUser() - успешное создание пользователя")
     void createUser_ValidData_ReturnUser() {
-        UserRequest request = new UserRequest("Ivan", "ivan@example.com", "123");
+        UserRequest request = new UserRequest("Ivan", "ivan@example.com", "123", "Europe/Moscow");
         User expectedUser = new User("Ivan", "ivan@example.com");
         expectedUser.setId(2L);
         expectedUser.setTaskCount(0);
@@ -89,7 +79,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("createUser() - пустое имя")
     void createUser_EmptyName_ThrowsException() {
-        UserRequest request = new UserRequest("", "mail", "123");
+        UserRequest request = new UserRequest("", "mail", "123", "Europe/Moscow");
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
@@ -103,7 +93,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("createUser() - имя из пробелов")
     void createUser_BlankName_ThrowsException() {
-        UserRequest request = new UserRequest("   ", "mail", "123");
+        UserRequest request = new UserRequest("   ", "mail", "123", "Europe/Moscow");
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -116,7 +106,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("createUser() - имя null")
     void createUser_NullName_ThrowsException() {
-        UserRequest request = new UserRequest(null, "mail", "123");
+        UserRequest request = new UserRequest(null, "mail", "123", "Europe/Moscow");
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -145,8 +135,8 @@ public class UserServiceTest {
     void getUserById_NonExistingId_ThrowsException() {
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
         
-        UserNotFoundException exception = assertThrows(
-                UserNotFoundException.class,
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
                 () -> userService.getUserById(999L)
         );
 
@@ -249,7 +239,7 @@ public class UserServiceTest {
     @Test
     @DisplayName("createUser() - email уже существует → исключение")
     void createUser_DuplicateEmail_ThrowsException() {
-        UserRequest duplicateRequest = new UserRequest("Другой пользователь", "test@example.com", "123");
+        UserRequest duplicateRequest = new UserRequest("Другой пользователь", "test@example.com", "123", "Europe/Moscow");
         
         when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
         
@@ -265,11 +255,11 @@ public class UserServiceTest {
     @Test
     @DisplayName("createUser() - email с разным регистром НЕ считается дубликатом (текущее поведение)")
     void createUser_EmailCaseInsensitive_DoesNotThrowException_WithCurrentBehavior() {
-        UserRequest firstRequest = new UserRequest("Первый", "test@example.com", "123");
+        UserRequest firstRequest = new UserRequest("Первый", "test@example.com", "123", "Europe/Moscow");
         User firstUser = new User("Первый", "test@example.com");
         firstUser.setId(2L);
         
-        UserRequest secondRequest = new UserRequest("Другой", "TEST@EXAMPLE.COM", "123");
+        UserRequest secondRequest = new UserRequest("Другой", "TEST@EXAMPLE.COM", "123", "Europe/Moscow");
         User secondUser = new User("Другой", "TEST@EXAMPLE.COM");
         secondUser.setId(3L);
         

@@ -2,23 +2,17 @@ package com.example.task_manager.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.authentication.configurers.userdetails.DaoAuthenticationConfigurer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.AccessDeniedHandler;
-
-import com.example.task_manager.model.Role;
 
 @Configuration
 @EnableWebSecurity
@@ -32,27 +26,16 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Profile("dev")
-    public SecurityFilterChain devSecurityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/h2-console/**").permitAll()
-                .anyRequest().permitAll()
-            )
-            .csrf(csrf -> csrf.disable())
-            .headers(headers -> headers.frameOptions().sameOrigin());
-        return http.build();
-
-    }
-
-    @Bean
-    @Profile("prod")
-    public SecurityFilterChain prodSecurityFilterChain( HttpSecurity http) throws Exception {
+    public SecurityFilterChain SecurityFilterChain( HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/users/register").permitAll()
                 .requestMatchers("/info/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/directions/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/directions/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/projects/**").hasAnyRole("USER", "ADMIN")
+                .requestMatchers("/projects/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults())

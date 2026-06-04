@@ -15,9 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,7 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 
 @WebMvcTest(UserController.class)
-@ActiveProfiles("prod") // профиль приложения
 @DisplayName("Тесты безопасности UserController")
 public class UserControllerTest {
 
@@ -145,7 +142,7 @@ public class UserControllerTest {
     @DisplayName("POST /users - USER не может создать нового пользователя -> 403")
     @WithMockUser(username = "user@test.com", roles = "USER")
     void user_CannotCreateUser_Returns403() throws Exception {
-        UserRequest request = new UserRequest("New User", "new@test.com", "123");
+        UserRequest request = new UserRequest("New User", "new@test.com", "123", "Europe/Moscow");
         
         mockMvc.perform(post("/users")
                 .contentType(MediaType.APPLICATION_JSON)

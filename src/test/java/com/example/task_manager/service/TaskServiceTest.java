@@ -1,19 +1,18 @@
 package com.example.task_manager.service;
 
+import com.example.task_manager.component.TimeConverter;
 import com.example.task_manager.dto.TaskRequest;
-import com.example.task_manager.dto.TaskResponse;
+import com.example.task_manager.dto.TasksPerHourResponse;
+import com.example.task_manager.dto.UserProjectTaskReport;
+import com.example.task_manager.exception.AccessDeniedException;
+import com.example.task_manager.exception.ResourceNotFoundException;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
-
+import com.example.task_manager.repository.ProjectRepository;
 import com.example.task_manager.repository.TaskRepository;
 import com.example.task_manager.repository.UserRepository;
-import com.example.task_manager.exception.AccessDeniedException;
-import com.example.task_manager.exception.TaskNotFoundException;
-import com.example.task_manager.exception.UserNotFoundException;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,15 +20,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("\n =======TaskService Unit Tests======= \n")
@@ -42,10 +41,16 @@ class TaskServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private ProjectRepository projectRepository;
+
+    @Mock
     private UserService userService;
 
     @Mock
     private StatusService statusService;
+
+    @Mock
+    private TimeConverter timeConverter;
 
     @InjectMocks
     private TaskService taskService;
@@ -58,8 +63,9 @@ class TaskServiceTest {
         User user = new User("user1", "user@test.ru");
         user.setId(1L);
         user.setRole(Role.USER);
+        user.setTimeZone("Europe/Moscow");
 
-        TaskRequest task = new TaskRequest("task1", currentDate, 1L, null);
+        TaskRequest task = new TaskRequest("task1", currentDate, 1L, null, null);
 
         when(userService.getUserById(1L)).thenReturn(user);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -69,6 +75,7 @@ class TaskServiceTest {
 
         assertEquals("task1", result.getTitle());
         assertEquals(1L, result.getUserId());
+        assertEquals(null, result.getProject());;
     }
 
     @Test
@@ -77,9 +84,10 @@ class TaskServiceTest {
         User admin = new User("admin", "admin@test.ru");
         admin.setId(1L);
         admin.setRole(Role.ADMIN);
+        admin.setTimeZone("Europe/Moscow");
 
 
-        TaskRequest task = new TaskRequest("task1", currentDate, 1L, null);
+        TaskRequest task = new TaskRequest("task1", currentDate, 1L, null, null);
 
         when(userService.getUserById(1L)).thenReturn(admin);
         when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
@@ -97,12 +105,14 @@ class TaskServiceTest {
         User admin = new User("admin", "admin@test.ru");
         admin.setId(1L);
         admin.setRole(Role.ADMIN);
+        admin.setTimeZone("Europe/Moscow");
 
         User user = new User("user", "user@test.ru");
         user.setId(2L);
         user.setRole(Role.USER);
+        user.setTimeZone("Europe/Moscow");
 
-        TaskRequest task = new TaskRequest("Admin task", currentDate, 2L, null);
+        TaskRequest task = new TaskRequest("Admin task", currentDate, 2L, null, null);
 
         when(userService.getUserById(1L)).thenReturn(admin);
         when(userRepository.findById(2L)).thenReturn(Optional.of(user));
@@ -121,12 +131,14 @@ class TaskServiceTest {
         User user = new User("user1", "user1@test.ru");
         user.setId(1L);
         user.setRole(Role.USER);
+        user.setTimeZone("Europe/Moscow");
 
         User user2 = new User("user2", "user2@test.ru");
         user2.setId(2L);
         user2.setRole(Role.USER);
+        user2.setTimeZone("Europe/Moscow");
 
-        TaskRequest task = new TaskRequest("Second user task", currentDate, 2L, null);
+        TaskRequest task = new TaskRequest("Second user task", currentDate, 2L, null, null);
 
         when(userService.getUserById(1L)).thenReturn(user);
     
@@ -139,9 +151,10 @@ class TaskServiceTest {
         User user = new User("user1", "user@test.ru");
         user.setId(1L);
         user.setRole(Role.USER);
+        user.setTimeZone("Europe/Moscow");
 
-        TaskRequest oldRequest = new TaskRequest("task1", currentDate, 1L, null);
-        TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), 1L, null);
+        TaskRequest oldRequest = new TaskRequest("task1", currentDate, 1L, null, null);
+        TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), null, null, null);
 
         when(userService.getUserById(1L)).thenReturn(user);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -174,13 +187,15 @@ class TaskServiceTest {
         User admin = new User("admin", "user@test.ru");
         admin.setId(1L);
         admin.setRole(Role.ADMIN);
+        admin.setTimeZone("Europe/Moscow");
 
         User user = new User("user1", "user@test.ru");
         user.setId(2L);
         user.setRole(Role.USER);
+        user.setTimeZone("Europe/Moscow");
 
-        TaskRequest oldRequest = new TaskRequest("task1", currentDate, 2L, null);
-        TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), 2L, null);
+        TaskRequest oldRequest = new TaskRequest("task1", currentDate, 2L, null, null);
+        TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), 2L, null, null);
 
         when(userService.getUserById(1L)).thenReturn(admin);
         when(userRepository.findById(2L)).thenReturn(Optional.of(user));
@@ -214,13 +229,15 @@ class TaskServiceTest {
         User user = new User("user1", "user@test.ru");
         user.setId(1L);
         user.setRole(Role.USER);
+        user.setTimeZone("Europe/Moscow");
 
         User user2 = new User("user2", "user@test.ru");
         user2.setId(2L);
         user2.setRole(Role.USER);
+        user2.setTimeZone("Europe/Moscow");
 
-        TaskRequest oldRequest = new TaskRequest("task1", currentDate, 2L, null);
-        TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), 2L, null);
+        TaskRequest oldRequest = new TaskRequest("task1", currentDate, 2L, null, null);
+        TaskRequest updatedRequest = new TaskRequest("Updated title", currentDate.plusDays(1), 2L, null, null);
 
         when(userService.getUserById(2L)).thenReturn(user2);
         when(userRepository.findById(2L)).thenReturn(Optional.of(user2));
@@ -507,7 +524,7 @@ class TaskServiceTest {
 
         when(taskRepository.findById(999L)).thenReturn(Optional.empty());
 
-        assertThrows(TaskNotFoundException.class, () -> taskService.getTaskByIdForUser(999L, user.getId(), user.getRole()));
+        assertThrows(ResourceNotFoundException.class, () -> taskService.getTaskByIdForUser(999L, user.getId(), user.getRole()));
     }
 
     @Test
@@ -578,20 +595,119 @@ class TaskServiceTest {
 
         when(userRepository.existsById(999L)).thenReturn(false);
 
-        assertThrows(UserNotFoundException.class,
+        assertThrows(ResourceNotFoundException.class,
                 () -> taskService.getAllTasksByUserIdForUser(999L, 1L, Role.USER));
         
 
     }
 
-    /*
-    getAllTasksForUser + 
-    getTaskByIdForUser +
-    getAllTasksByUserIdForUser +
-    createTask + 
-    updateTask + 
-    deleteTask + 
-    completeTask +
-    */
+    @Test
+    void getReport_shouldReturnReport() {
 
+        UserProjectTaskReport report =
+                new UserProjectTaskReport(1L, 1L, 5L);
+
+        when(taskRepository.getUserProjectTaskReport(null))
+                .thenReturn(List.of(report));
+
+        List<UserProjectTaskReport> result =
+                taskService.getReport(null, Role.ADMIN);
+
+        assertEquals(1, result.size());
+        assertEquals(5L, result.get(0).taskCount());
+    }
+
+    @Test
+    @DisplayName("USER не может менять владельца задачи")
+    void userShouldNotBeAbleToChangeTaskOwner() {
+
+        User user = new User("user1", "user@test.ru");
+        user.setId(1L);
+        user.setRole(Role.USER);
+
+        Task task = new Task("task1", currentDate, 1L);
+        task.setId(10L);
+
+        TaskRequest request = new TaskRequest(
+                "updated title",
+                currentDate.plusDays(1),
+                2L,
+                null,
+                null
+        );
+
+        when(taskRepository.findById(10L)).thenReturn(Optional.of(task));
+
+        assertThrows(AccessDeniedException.class, () ->
+                taskService.updateTask(10L, request, user.getId(), Role.USER)
+        );
+    }
+
+    @Test
+    @DisplayName("ADMIN может менять владельца задачи")
+    void adminShouldBeAbleToChangeTaskOwner() {
+
+        User admin = new User("admin", "admin@test.ru");
+        admin.setId(99L);
+        admin.setRole(Role.ADMIN);
+
+        User newOwner = new User("user", "user@test.ru");
+        newOwner.setId(1L);
+        newOwner.setRole(Role.USER);
+
+        Task task = new Task("task1", currentDate, 2L);
+        task.setId(10L);
+
+        TaskRequest request = new TaskRequest(
+                "updated title",
+                currentDate.plusDays(1),
+                newOwner.getId(),   // смена владельца
+                null,
+                null
+        );
+
+        User oldOwner = new User("old", "old@test.ru");
+        oldOwner.setId(2L);
+        oldOwner.setRole(Role.USER);
+
+        when(taskRepository.findById(10L)).thenReturn(Optional.of(task));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(newOwner));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(oldOwner));
+        when(taskRepository.save(any(Task.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        Task result = taskService.updateTask(
+                10L,
+                request,
+                admin.getId(),
+                Role.ADMIN
+        );
+
+        assertEquals(1L, result.getUserId());
+    }
+
+    @Test
+    void shouldReturnTasksPerHourStats() {
+
+        LocalDateTime from = LocalDateTime.of(2026, 5, 1, 10, 0);
+        LocalDateTime to = LocalDateTime.of(2026, 5, 1, 12, 0);
+
+        Instant hour1 = Instant.parse("2026-05-01T10:00:00Z");
+        Instant hour2 = Instant.parse("2026-05-01T11:00:00Z");
+
+        when(taskRepository.getTasksPerHourUtc(from, to))
+                .thenReturn(List.of(
+                        new Object[]{hour1, 2L},
+                        new Object[]{hour2, 5L}
+                ));
+        
+
+        List<TasksPerHourResponse> result =
+            taskService.getTasksPerHourStatsUtc(from, to, Role.ADMIN);
+        
+        assertEquals(2, result.size());
+
+        assertEquals(2, result.get(0).taskCount());
+        assertEquals(5, result.get(1).taskCount());
+    }
 }

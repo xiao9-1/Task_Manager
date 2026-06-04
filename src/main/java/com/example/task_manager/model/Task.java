@@ -17,21 +17,32 @@ public class Task {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    @Column(updatable = false)
     private LocalDateTime createdAt;
     private LocalDateTime dueTime;
     private LocalDateTime completedAt;
     private Double rating;
 
-    @Column(name = "user_id", insertable = true, updatable = false)
+    @Column(name = "user_id", insertable = true, updatable = true)
     private Long userId;
 
+    @Column(updatable = false)
     private Long createdBy;
     private Long updatedBy;
 
     private LocalDateTime updatedAt;
-    
+
+    @ManyToOne
+    @JoinColumn(name = "project_id", nullable = true)
+    private Project project;
+
+
     public Long getUserId() {
         return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public Task() {}
@@ -131,6 +142,14 @@ public class Task {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Project getProject() {
+        return project;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
     }
 }
 

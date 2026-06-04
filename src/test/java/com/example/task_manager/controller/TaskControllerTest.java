@@ -1,13 +1,10 @@
 package com.example.task_manager.controller;
 
-//import com.example.config.TestSecurityConfig;
 import com.example.task_manager.dto.AdminTaskResponse;
-import com.example.task_manager.dto.TaskDto;
 import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.dto.TaskResponse;
 import com.example.task_manager.exception.AccessDeniedException;
-import com.example.task_manager.exception.TaskNotFoundException;
-import com.example.task_manager.exception.UserNotFoundException;
+import com.example.task_manager.exception.ResourceNotFoundException;
 import com.example.task_manager.mapper.TaskMapper;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Status;
@@ -15,42 +12,28 @@ import com.example.task_manager.model.Task;
 import com.example.task_manager.model.User;
 import com.example.task_manager.security.CustomUserDetails;
 import com.example.task_manager.service.TaskService;
-import com.example.task_manager.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cglib.core.Local;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.support.WithMockUser;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TaskController.class)
 @DisplayName("Тесты TaskController")
@@ -123,7 +106,8 @@ class TaskControllerTest {
             currDate.plusDays(1),
             null,
             userId,
-            0.5
+            0.5,
+            null
         );
     }
 
@@ -135,7 +119,8 @@ class TaskControllerTest {
             Status.PENDING,
             currDate,
             null,
-            0.5
+            0.5,
+            null
         );
     }
 
@@ -177,8 +162,7 @@ class TaskControllerTest {
         when(taskService.getAllTasksForUser(anyLong(), any()))
                 .thenReturn(List.of(task));
 
-        when(taskMapper.toDto(any(Task.class), eq(Role.USER)))
-                .thenReturn(dto);
+        when(taskMapper.toDto(any(), any(), any())).thenReturn(dto);
 
         mockMvc.perform(get("/tasks"))
                 .andExpect(status().isOk())
@@ -198,7 +182,7 @@ class TaskControllerTest {
         when(taskService.getAllTasksForUser(anyLong(), any()))
                 .thenReturn(List.of(task));
 
-        when(taskMapper.toDto(any(Task.class), eq(Role.ADMIN)))
+        when(taskMapper.toDto(any(Task.class), eq(Role.ADMIN), any()))
                 .thenReturn(dto);
 
         mockMvc.perform(get("/tasks"))
@@ -221,8 +205,7 @@ class TaskControllerTest {
         when(taskService.getTaskByIdForUser(eq(1L), eq(1L), eq(Role.USER)))
                 .thenReturn(task);
 
-        when(taskMapper.toDto(eq(task), eq(Role.USER)))
-                .thenReturn(dto);
+        when(taskMapper.toDto(any(), any(), any())).thenReturn(dto);
 
         mockMvc.perform(get("/tasks/1"))
                 .andExpect(status().isOk())
@@ -242,7 +225,7 @@ class TaskControllerTest {
         when(taskService.getTaskByIdForUser(eq(1L), eq(1L), eq(Role.ADMIN)))
                 .thenReturn(task);
 
-        when(taskMapper.toDto(eq(task), eq(Role.ADMIN)))
+        when(taskMapper.toDto(eq(task), eq(Role.ADMIN), any()))
                 .thenReturn(dto);
 
         mockMvc.perform(get("/tasks/1"))
@@ -271,7 +254,7 @@ class TaskControllerTest {
         authenticate(user(1L));
 
         when(taskService.getTaskByIdForUser(anyLong(), anyLong(), any(Role.class)))
-                .thenThrow(new TaskNotFoundException("Задача не найдена"));
+                .thenThrow(new ResourceNotFoundException("Задача не найдена"));
 
         mockMvc.perform(get("/tasks/999"))
                 .andExpect(status().isNotFound());
@@ -289,7 +272,7 @@ class TaskControllerTest {
         when(taskService.getAllTasksByUserIdForUser(eq(1L), eq(1L), eq(Role.USER)))
                 .thenReturn(List.of(task));
 
-        when(taskMapper.toDto(any(Task.class), eq(Role.USER)))
+        when(taskMapper.toDto(any(Task.class), eq(Role.USER), any()))
                 .thenReturn(dto);
 
         mockMvc.perform(get("/tasks/user/1"))
@@ -310,7 +293,7 @@ class TaskControllerTest {
         when(taskService.getAllTasksByUserIdForUser(eq(2L), eq(1L), eq(Role.ADMIN)))
                 .thenReturn(List.of(task));
 
-        when(taskMapper.toDto(any(Task.class), eq(Role.ADMIN)))
+        when(taskMapper.toDto(any(Task.class), eq(Role.ADMIN), any()))
                 .thenReturn(dto);
 
         mockMvc.perform(get("/tasks/user/2"))
@@ -338,7 +321,7 @@ class TaskControllerTest {
         authenticate(user(1L));
 
         when(taskService.getAllTasksByUserIdForUser(anyLong(), anyLong(), any(Role.class)))
-                .thenThrow(new UserNotFoundException("Пользователь не найден"));
+                .thenThrow(new ResourceNotFoundException("Пользователь не найден"));
 
         mockMvc.perform(get("/tasks/user/999"))
                 .andExpect(status().isNotFound());
@@ -405,7 +388,7 @@ class TaskControllerTest {
                 eq(999L),
                 anyLong(),
                 any(Role.class)
-        )).thenThrow(new UserNotFoundException("Пользователь не найден"));
+        )).thenThrow(new ResourceNotFoundException("Пользователь не найден"));
 
         mockMvc.perform(get("/tasks/user/999"))
                 .andExpect(status().isNotFound())
