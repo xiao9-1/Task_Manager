@@ -25,7 +25,6 @@ import com.example.task_manager.model.Direction;
 import com.example.task_manager.repository.DirectionRepository;
 
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles("test")
 @DisplayName("\n =======DirectionService Unit Tests======= \n")
 public class DirectionServiceTest {
 

@@ -23,7 +23,6 @@ import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-//@ActiveProfiles("test")
 @Transactional
 @DisplayName("Rating and TOP Status Integration Tests")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)

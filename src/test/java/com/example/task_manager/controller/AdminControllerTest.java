@@ -41,7 +41,6 @@ import com.example.task_manager.security.UserSecurityService;
 import com.example.task_manager.service.TaskService;
 
 @WebMvcTest(AdminController.class)
-@ActiveProfiles("test")
 @AutoConfigureMockMvc()
 @Import(SecurityConfig.class)
 public class AdminControllerTest {

@@ -29,7 +29,6 @@ import com.example.task_manager.repository.ProjectRepository;
 import com.example.task_manager.security.UserSecurityService;
 
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles("test")
 @DisplayName("\n =======ProjectService Unit Tests======= \n")
 public class ProjectServiceTest {
 

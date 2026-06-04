@@ -34,7 +34,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 @WebMvcTest(ProjectController.class)
-@ActiveProfiles("test")
 class ProjectControllerTest {
 
     @Autowired

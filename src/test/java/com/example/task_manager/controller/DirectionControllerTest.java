@@ -28,7 +28,6 @@ import com.example.task_manager.service.DirectionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(DirectionController.class)
-@ActiveProfiles("test")
 @AutoConfigureMockMvc()
 class DirectionControllerTest {
 

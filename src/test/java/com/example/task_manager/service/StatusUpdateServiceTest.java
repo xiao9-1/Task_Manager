@@ -19,7 +19,6 @@ import com.example.task_manager.model.Status;
 import com.example.task_manager.model.Task;
 
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles("test")
 @DisplayName("=======StatusUpdateServiceTest Test=======")
 class StatusUpdateServiceTest {
 
