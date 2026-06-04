@@ -7,10 +7,6 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.example.task_manager.component.TimeConverter;
 import com.example.task_manager.dto.AdminTaskResponse;
@@ -19,11 +15,10 @@ import com.example.task_manager.dto.TaskResponse;
 import com.example.task_manager.model.Role;
 import com.example.task_manager.model.Task;
 
-@ActiveProfiles("test")
+
 public class TaskMapperTest {
 
     LocalDateTime currDate = LocalDateTime.now();
-
 
     private TimeConverter timeConverter;
 
