@@ -33,7 +33,6 @@ import java.util.Arrays;
 import java.util.List;
 
 @WebMvcTest(UserController.class)
-@ActiveProfiles("test") // профиль приложения
 @DisplayName("Тесты безопасности UserController")
 public class UserControllerTest {
 

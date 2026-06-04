@@ -33,7 +33,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@ActiveProfiles("test")
 @DisplayName("\n =======TaskService Unit Tests======= \n")
 class TaskServiceTest {
 
