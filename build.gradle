@@ -59,3 +59,7 @@ bootRun {
 springBoot {
     buildInfo()
 }
+
+test {
+    systemProperty "spring.profiles.active", "test"
+}
