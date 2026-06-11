@@ -36,6 +36,8 @@ public class CustomUserDetails implements UserDetails {
         return user.getTimeZone();
     }
 
+    public String getName() {return user.getName(); }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(user.getRole().getAuthority()));
