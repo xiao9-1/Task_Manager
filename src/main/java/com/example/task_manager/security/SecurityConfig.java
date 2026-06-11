@@ -13,6 +13,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebSecurity
@@ -26,23 +28,21 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain SecurityFilterChain( HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/users/register").permitAll()
-                .requestMatchers("/info/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/directions/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/directions/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/projects/**").hasAnyRole("USER", "ADMIN")
-                .requestMatchers("/projects/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
-            )
-            .httpBasic(Customizer.withDefaults())
-            .formLogin(form -> form
-            .defaultSuccessUrl("/tasks", true)
-        )
-            .csrf(csrf -> csrf.disable());
+                .cors(cors -> {})
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/login").permitAll()
+                        .requestMatchers("/users/register").permitAll()
+                        .requestMatchers("/info/**").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/projects/**").authenticated()
+                        .anyRequest().authenticated()
+                )
+                .formLogin(form -> form.disable())
+                .httpBasic(httpBasic -> httpBasic.disable());
+
         return http.build();
     }
 
@@ -63,5 +63,18 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
+    }
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**")
+                        .allowedOrigins("http://localhost:4200")
+                        .allowedMethods("*")
+                        .allowCredentials(true);
+            }
+        };
     }
 }
