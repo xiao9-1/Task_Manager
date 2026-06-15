@@ -61,9 +61,9 @@ public class AuthController {
         ));
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletRequest request) {
-        request.getSession().invalidate();
-        return ResponseEntity.ok(Map.of("status", "ok"));
-    }
+//    @PostMapping("/logout")
+//    public ResponseEntity<?> logout(HttpServletRequest request) {
+//        request.getSession().invalidate();
+//        return ResponseEntity.ok(Map.of("status", "ok"));
+//    }
 }
