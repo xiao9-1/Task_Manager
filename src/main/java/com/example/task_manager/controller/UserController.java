@@ -30,7 +30,7 @@ public class UserController {
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@RequestBody UserRequest request) {
 
-        log.info("Регистрация пользователя: {}", request.email());
+        log.info("POST /register: {}", request.email());
 
         User user = userService.createUser(request);
 

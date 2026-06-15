@@ -2,6 +2,8 @@ package com.example.task_manager.controller;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +20,8 @@ import com.example.task_manager.service.ProjectService;
 @RestController
 @RequestMapping("/projects")
 public class ProjectController {
+
+    private static final Logger log = LoggerFactory.getLogger(ProjectController.class);
 
     private final ProjectService projectService;
 
@@ -36,6 +40,8 @@ public class ProjectController {
     @GetMapping
     public List<ProjectResponse> getAllProjects() {
 
+        log.info("GET /projects");
+
         return projectService.getAllProjects()
                 .stream()
                 .map(p -> new ProjectResponse(
@@ -49,6 +55,8 @@ public class ProjectController {
     @PutMapping("/{id}")
     public ProjectResponse updateProject(@PathVariable("id") Long projectId, @RequestBody ProjectRequest request) {
 
+        log.info("PUT /projects/{}", projectId);
+
         Project updatedProject = projectService.updateProject(projectId, request);
 
         return new ProjectResponse(
@@ -56,6 +64,4 @@ public class ProjectController {
             updatedProject.getName(),
             updatedProject.getDirection().getId());
     }
-
-    
 }

@@ -15,7 +15,7 @@ import java.util.List;
 @RequestMapping("/directions")
 public class DirectionController {
 
-    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+    private static final Logger log = LoggerFactory.getLogger(DirectionController.class);
 
     private final DirectionService directionService;
 
@@ -25,7 +25,7 @@ public class DirectionController {
 
     @PostMapping
     public DirectionResponse createDirection(@RequestBody DirectionRequest request) {
-        log.info("Создание направления {}", request.name());
+        log.info("POST /directions {}", request.name());
 
         Direction direction = directionService.createDirection(request);
         return new DirectionResponse(direction.getId(), direction.getName());
@@ -33,6 +33,8 @@ public class DirectionController {
 
     @GetMapping
     public List<DirectionResponse> getAllDirections() {
+
+        log.info("GET /directions");
 
         return directionService.getAllDirections()
                 .stream()

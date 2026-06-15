@@ -32,7 +32,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
 
-        log.info("Попытка авторизации: {}", request.getEmail());
+        log.info("GET /login: {}", request.getEmail());
 
         Authentication authentication =
                 authenticationManager.authenticate(
@@ -52,6 +52,8 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<?> me(@AuthenticationPrincipal CustomUserDetails user) {
+
+        log.info("GET /me : {}", user.getEmail());
 
         return ResponseEntity.ok(Map.of(
                 "id", user.getId(),
