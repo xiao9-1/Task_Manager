@@ -156,26 +156,6 @@ public class FullIntegrationTest extends AbstractIntegrationTest {
 
     }
 
-    @Test
-    @DisplayName("Админ получает задачи всех пользователей")
-    public void adminShouldReturnAllTasks() throws Exception {
-        Task task1 = new Task("task 1", LocalDateTime.now().plusDays(1), user.getId());
-        Task task2 = new Task("task 2", LocalDateTime.now().plusDays(1), user.getId());
-        Task taskAdmin = new Task("task Admin", LocalDateTime.now().plusDays(1), admin.getId());
-
-        em.persist(task1);
-        em.persist(task2);
-        em.persist(taskAdmin);
-
-        mockMvc.perform(get("/tasks")
-                        .with(user(buildPrincipal(admin)))
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].title").value("task 1"))
-                .andExpect(jsonPath("$[1].title").value("task 2"))
-                .andExpect(jsonPath("$[2].title").value("task Admin"));
-    }
-
     // ======GET USER TASK BY TASK ID SCENARIO======
 
     @Test

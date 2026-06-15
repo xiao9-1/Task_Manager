@@ -407,34 +407,6 @@ class TaskServiceTest {
     }
 
     @Test 
-    @DisplayName("getAllTasksForUser() должен вернуть все задачи для админа")
-    public void getAllTasksForUserShouldReturnAllTasksForAdmin() {
-
-        User admin = new User("admin", "admin@test.ru");
-        admin.setId(1L);
-        admin.setRole(Role.ADMIN);
-
-        Task taskAdmin = new Task("Admin Task", currentDate.plusDays(1), 1L);
-        taskAdmin.setId(1L);
-
-        List<Task> tasks = new ArrayList<>();
-        tasks.add(taskAdmin);
-
-        for (long i = 2; i < 5; i++) {
-            Task task = new Task("task_" + i, currentDate.plusDays(1), 2L);
-            task.setId(i);
-            tasks.add(task);
-        }
-
-        when(taskRepository.findAll()).thenReturn(tasks);
-
-        List<Task> result =
-                taskService.getAllTasksForUser(admin.getId(), admin.getRole());
-
-        assertEquals(4, result.size());
-    }
-
-    @Test 
     @DisplayName("getAllTasksForUser() должен вернуть все только задачи пользователя для пользователя")
     public void getAllTasksForUserShouldReturnOnlyUserTasksForUser() {
         

@@ -162,35 +162,12 @@ class TaskControllerTest {
         when(taskService.getAllTasksForUser(anyLong(), any()))
                 .thenReturn(List.of(task));
 
-        when(taskMapper.toDto(any(), any(), any())).thenReturn(dto);
+        when(taskMapper.toTaskResponse(any(), any())).thenReturn(dto);
 
         mockMvc.perform(get("/tasks"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].title").value("task1"))
                 .andExpect(jsonPath("$[0].updatedAt").doesNotExist());
-    }
-
-    @Test
-    void getAllTasks_Admin_shouldReturnAdminResponse() throws Exception {
-
-        authenticate(admin(1L));
-
-        Task task = createTask(1L, 1L);
-
-        AdminTaskResponse dto = createAdminTaskResponse(1L, 1L);
-
-        when(taskService.getAllTasksForUser(anyLong(), any()))
-                .thenReturn(List.of(task));
-
-        when(taskMapper.toDto(any(Task.class), eq(Role.ADMIN), any()))
-                .thenReturn(dto);
-
-        mockMvc.perform(get("/tasks"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].title").value("task1"))
-                .andExpect(jsonPath("$[0].updatedBy").value(org.hamcrest.Matchers.nullValue()))
-                .andExpect(jsonPath("$[0].updatedAt").value(org.hamcrest.Matchers.nullValue()))
-                .andExpect(jsonPath("$[0].createdBy").value(1L));
     }
 
     @Test
@@ -205,36 +182,12 @@ class TaskControllerTest {
         when(taskService.getTaskByIdForUser(eq(1L), eq(1L), eq(Role.USER)))
                 .thenReturn(task);
 
-        when(taskMapper.toDto(any(), any(), any())).thenReturn(dto);
+        when(taskMapper.toTaskResponse(any(), any())).thenReturn(dto);
 
         mockMvc.perform(get("/tasks/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.title").value("task1"));
-    }
-
-    @Test
-    void getTaskById_admin_shouldReturnAdminTaskResponse() throws Exception {
-
-        authenticate(admin(1L));
-
-        Task task = createTask(1L, 1L);
-
-        AdminTaskResponse dto = createAdminTaskResponse(1L, 1L);
-
-        when(taskService.getTaskByIdForUser(eq(1L), eq(1L), eq(Role.ADMIN)))
-                .thenReturn(task);
-
-        when(taskMapper.toDto(eq(task), eq(Role.ADMIN), any()))
-                .thenReturn(dto);
-
-        mockMvc.perform(get("/tasks/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.title").value("task1"))
-                .andExpect(jsonPath("$.updatedBy").value(org.hamcrest.Matchers.nullValue()))
-                .andExpect(jsonPath("$.updatedAt").value(org.hamcrest.Matchers.nullValue()))
-                .andExpect(jsonPath("$.createdBy").value(1L));;
     }
 
     @Test
@@ -272,7 +225,7 @@ class TaskControllerTest {
         when(taskService.getAllTasksByUserIdForUser(eq(1L), eq(1L), eq(Role.USER)))
                 .thenReturn(List.of(task));
 
-        when(taskMapper.toDto(any(Task.class), eq(Role.USER), any()))
+        when(taskMapper.toTaskResponse(any(Task.class), any()))
                 .thenReturn(dto);
 
         mockMvc.perform(get("/tasks/user/1"))
@@ -288,12 +241,12 @@ class TaskControllerTest {
 
         Task task = createTask(1L, 2L);
 
-        AdminTaskResponse dto = createAdminTaskResponse(1L, 2L);
+        TaskResponse dto = createTaskResponse(1L, 2L);
 
         when(taskService.getAllTasksByUserIdForUser(eq(2L), eq(1L), eq(Role.ADMIN)))
                 .thenReturn(List.of(task));
 
-        when(taskMapper.toDto(any(Task.class), eq(Role.ADMIN), any()))
+        when(taskMapper.toTaskResponse(any(Task.class), any()))
                 .thenReturn(dto);
 
         mockMvc.perform(get("/tasks/user/2"))

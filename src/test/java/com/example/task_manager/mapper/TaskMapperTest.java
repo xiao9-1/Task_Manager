@@ -31,13 +31,13 @@ public class TaskMapperTest {
     }
 
     @Test
-    @DisplayName("toDto() -> ADMIN получает AdminTaskResponse")
+    @DisplayName("toDto() -> ADMIN получает TaskResponse")
     void toDto_Admin_shouldReturnAdminTaskResponse() {
 
         Task task = new Task("task1", currDate, 1L);
         task.setId(1L);
 
-        TaskDto dto = taskMapper.toDto(task, Role.ADMIN, "Europe/Moscow");
+        AdminTaskResponse dto = taskMapper.toAdminTaskResponse(task, "Europe/Moscow");
 
         assertInstanceOf(AdminTaskResponse.class, dto);
     }
@@ -49,7 +49,7 @@ public class TaskMapperTest {
         Task task = new Task("task1", currDate, 1L);
         task.setId(1L);
 
-        TaskDto dto = taskMapper.toDto(task, Role.USER,"Europe/Moscow");
+        TaskResponse dto = taskMapper.toTaskResponse(task,"Europe/Moscow");
 
         assertInstanceOf(TaskResponse.class, dto);
     }

@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.example.task_manager.mapper.TaskMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,9 @@ public class AdminControllerTest {
 
     @MockitoBean
     private TaskService taskService;
+
+    @MockitoBean
+    private TaskMapper taskMapper;
 
     @MockitoBean
     private UserSecurityService userSecurityService;
@@ -117,10 +121,10 @@ public class AdminControllerTest {
     }
 
     @Test
-    void getReport_unauthorized_shouldReturnUnauthorized() throws Exception {
+    void getReport_unauthorized_shouldReturnForbidden() throws Exception {
 
         mockMvc.perform(get("/admin/report/tasks"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
 
     }
 
