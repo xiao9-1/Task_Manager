@@ -18,7 +18,7 @@ public record AdminTaskResponse(
         Double rating,
         Long projectId
 
-) implements TaskDto {
+) {
     public static AdminTaskResponse from(Task task) {
         return new AdminTaskResponse(
                 task.getId(),

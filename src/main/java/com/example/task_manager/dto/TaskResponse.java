@@ -14,7 +14,7 @@ public record TaskResponse(
     LocalDateTime completedAt,
     Double rating,
     Long projectId
-) implements TaskDto {
+) {
 
     public static TaskResponse from(Task task) {
         return new TaskResponse(
