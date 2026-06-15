@@ -22,7 +22,7 @@ public class StatusUpdateService {
 
     public int updateAllStatuses(Collection<Task> tasks) {
 
-        log.debug("Запуск обновления статусов. Количество задач: {}", tasks.size());
+        log.debug("updateAllStatuses() - Запуск обновления статусов. Количество задач: {}", tasks.size());
 
         int updated = 0;
 

@@ -33,14 +33,14 @@ public class UserService {
     }
 
     public List<User> getAllUsers() {
-        log.info("Запрос всех пользователей.");
+        log.info("getAllUsers() - Запрос всех пользователей.");
         List<User> users = userRepository.findAll();
         log.debug("Найдено пользователей: {}", users.size());
         return users;
     }
 
     public User getUserById(Long id) {
-        log.info("Поиск пользователя по ID: {}", id);
+        log.info("getUserById() - Поиск пользователя по ID: {}", id);
         
         return userRepository.findById(id)
                 .map(user -> {
@@ -55,7 +55,7 @@ public class UserService {
         }
 
     public User createUser(UserRequest request) {
-        log.info("Создание нового пользователя: name='{}', email='{}'", request.name(), request.email());
+        log.info("createUser() - Создание нового пользователя: name='{}', email='{}'", request.name(), request.email());
 
         if (request.name() == null || request.name().trim().isEmpty()) {
             log.error("Попытка создать пользователя с пустым именем");
@@ -87,7 +87,7 @@ public class UserService {
 
     @Transactional
     public void updateTopStatus(Long userId) {
-        log.info("Обновление TOP статуса для пользователя ID={}", userId);
+        log.info("updateTopStatus() - Обновление TOP статуса для пользователя ID={}", userId);
 
         User user = getUserById(userId);
 
@@ -113,6 +113,7 @@ public class UserService {
     }
 
     public User getCurrentUser() {
+        log.info("getCurrentUser() - Получение текущего пользователя");
         String email = SecurityContextHolder.getContext()
             .getAuthentication()
             .getName();

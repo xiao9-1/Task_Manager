@@ -11,11 +11,11 @@ import java.time.LocalDateTime;
 @Service
 public class StatusService {
 
-    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+    private static final Logger log = LoggerFactory.getLogger(StatusService.class);
 
     public Status getCurrentStatus(Task task) {
 
-        log.debug("Расчёт статуса задачи: ID={}, dueTime={}, completedAt={}",
+        log.debug("getCurrentStatus() - Расчёт статуса задачи: ID={}, dueTime={}, completedAt={}",
                 task.getId(), task.getDueTime(), task.getCompletedAt());
 
         LocalDateTime now = LocalDateTime.now();
@@ -26,7 +26,7 @@ public class StatusService {
                     ? Status.COMPLETED_ON_TIME
                     : Status.COMPLETED_LATE;
 
-            log.info("Задача ID={} завершена. Итоговый статус={}",
+            log.info("getCurrentStatus() - Задача ID={} завершена. Итоговый статус={}",
                     task.getId(), status);
 
             return status;

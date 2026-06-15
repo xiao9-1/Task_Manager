@@ -55,6 +55,8 @@ public class TaskService {
 
     private Long resolveOwnerId(TaskRequest request, User creator) {
 
+        log.info("resolveOwnerId()");
+
         if (creator.getRole() == Role.ADMIN) {
             return request.userId() != null ? request.userId() : creator.getId();
         }
@@ -68,6 +70,8 @@ public class TaskService {
     }
 
     private void checkAccess(Task task, Long requesterId, Role role) {
+
+        log.info("checkAccess()");
 
         boolean isOwner = Objects.equals(task.getUserId(), requesterId);
 
@@ -142,7 +146,7 @@ public class TaskService {
     // Если не указывается ID автора задачи, то ID присваивается текущему пользователю
     public Task createTask(TaskRequest request, Long userId) {
 
-        log.info("Создание задачи: title='{}'", request.title());
+        log.info("createTask() - Создание задачи: title='{}'", request.title());
 
         if (request.title() == null || request.title().trim().isEmpty()) {
             throw new IllegalArgumentException("Заголовок не может быть пустым");
@@ -181,7 +185,7 @@ public class TaskService {
     // method updated 
     public Task updateTask(Long taskId, TaskRequest request, Long requesterId, Role role) {
 
-        log.info("Обновление задачи ID={}", taskId);
+        log.info("updateTask() - Обновление задачи ID={}", taskId);
 
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Задача не найдена"));
@@ -226,7 +230,7 @@ public class TaskService {
 
     // DELETE Удалить задачу
     public void deleteTask(Long taskId, Long requesterId, Role role) {
-        log.info("Запрос на удаление задачи с ID={}", taskId);
+        log.info("deleteTask() - Запрос на удаление задачи с ID={}", taskId);
 
         Task task = taskRepository.findById(taskId).orElse(null);
 
@@ -254,7 +258,7 @@ public class TaskService {
 
     public Task completeTask(Long taskId, Long userId, Role role) {
         
-        log.info("Завершение задачи ID={}", taskId);
+        log.info("completeTask() - Завершение задачи ID= {}", taskId);
 
         Task task = taskRepository.findById(taskId)
             .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
@@ -282,10 +286,12 @@ public class TaskService {
 
     // new method for GET /tasks
     public List<Task> getAllTasksForUser(Long userId, Role role) {
+        log.info("getAllTasksForUser() - Получение всех задач для пользователя {}", userId);
         return taskRepository.findAllByUserId(userId);
     }
 
     public List<Task> getAllTaskForAdmin(Role role) {
+        log.info("getAllTaskForAdmin() - Получение всех задач для админа");
         if (role != Role.ADMIN) {
             throw new AccessDeniedException("Данный ресурс не доступен для пользователя");
         }
@@ -295,6 +301,7 @@ public class TaskService {
 
     // new method for GET tasks/{id}
     public Task getTaskByIdForUser(Long taskId, Long userId, Role role) {
+        log.info("getTaskByIdForUser() - Получение задачи по Id = {}", taskId);
         Task task = taskRepository.findById(taskId).orElseThrow(() -> new ResourceNotFoundException("Задача не найдена"));
 
         checkAccess(task, userId, role);
@@ -304,6 +311,8 @@ public class TaskService {
 
     // new method for GET tasks/users/{id}
     public List<Task> getAllTasksByUserIdForUser(Long targetUserId, Long requesterId, Role role) {
+
+        log.info("getAllTasksByUserIdForUser() - Получение всех задач пользователя {}", targetUserId);
 
         if (!userRepository.existsById(targetUserId)) {
             throw new ResourceNotFoundException("Пользователь с ID " + targetUserId + " не найден");
@@ -320,6 +329,7 @@ public class TaskService {
     }
 
     public List<UserProjectTaskReport> getReport(Long userId, Role role) {
+        log.info("getReport() - Запрос отчета пользователем {}", userId);
         if (role == Role.ADMIN) {
             return taskRepository.getUserProjectTaskReport(userId);
         } else {
@@ -328,6 +338,8 @@ public class TaskService {
     }
 
     public List<TasksPerHourResponse> getTasksPerHourStatsUtc(LocalDateTime from, LocalDateTime to, Role role) {
+
+        log.info("getTasksPerHourStatsUtc() - Запрос почасовой статистики UTC");
 
         if (role != Role.ADMIN) {
             throw new AccessDeniedException(
@@ -351,6 +363,8 @@ public class TaskService {
     }
 
     public List<TasksPerHourResponse> getTasksPerHourStatsLocal(LocalDateTime from, LocalDateTime to, Role role, String userTimeZone) {
+
+        log.info("getTasksPerHourStatsLocal() - Запрос локальной почасовой статистики для часового пояса {}", userTimeZone);
 
         if (role != Role.ADMIN) {
             throw new AccessDeniedException(

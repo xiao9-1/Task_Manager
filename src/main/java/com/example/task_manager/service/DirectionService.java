@@ -25,6 +25,8 @@ public class DirectionService {
 
     public Direction createDirection(DirectionRequest request) {
 
+        log.info("createDirection() - создание направления - name: {}", request.name());
+
         String name = request.name();
 
         if (name == null || name.trim().isEmpty()) {
@@ -47,14 +49,14 @@ public class DirectionService {
 
     public List<Direction> getAllDirections() {
 
-        log.info("Запрос всех направлений");
+        log.info("getAllDirections() - Запрос всех направлений");
 
         return directionRepository.findAll();
         
     }
 
     public Direction getDirectionById(Long directionId) {
-        log.info("Запрос проекта с ID: {}", directionId);
+        log.info("getDirectionById() - Запрос проекта с ID: {}", directionId);
 
         return directionRepository.findById(directionId)
             .orElseThrow(() -> new ResourceNotFoundException("Проект с ID " + directionId + " не найден"));

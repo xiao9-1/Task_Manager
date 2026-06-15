@@ -16,7 +16,7 @@ import com.example.task_manager.repository.ProjectRepository;
 @Service
 public class ProjectService {
 
-    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProjectService.class);
 
     private final ProjectRepository projectRepository;
     private final DirectionRepository directionRepository;
@@ -30,7 +30,7 @@ public class ProjectService {
 
     public Project createProject(ProjectRequest request) {
 
-        log.info("Запрос на создание проекта");
+        log.info("createProject() - Запрос на создание проекта");
 
         String name = request.name();
 
@@ -58,14 +58,14 @@ public class ProjectService {
 
     public List<Project> getAllProjects() {
 
-        log.info("Запрос вывода всех проектов");
+        log.info("getAllProjects() - Запрос вывода всех проектов");
 
         return projectRepository.findAll();
         
     }
 
     public Project getProjectById(Long projectId) {
-        log.info("Запрос проекта с ID: {}", projectId);
+        log.info("getProjectById() - Запрос проекта с ID: {}", projectId);
 
         return projectRepository.findById(projectId)
             .orElseThrow(() -> new ResourceNotFoundException("Проект с ID " + projectId + " не найден"));
@@ -73,7 +73,7 @@ public class ProjectService {
 
     public Project updateProject(Long projectId, ProjectRequest request) {
 
-        log.info("Запрос на обновление проекта id={}", projectId);
+        log.info("updateProject() - Запрос на обновление проекта id= {}", projectId);
 
         Project project = getProjectById(projectId);
 
