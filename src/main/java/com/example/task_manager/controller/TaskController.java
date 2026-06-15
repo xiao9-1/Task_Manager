@@ -1,6 +1,5 @@
 package com.example.task_manager.controller;
 
-import com.example.task_manager.dto.TaskDto;
 import com.example.task_manager.dto.TaskRequest;
 import com.example.task_manager.dto.TaskResponse;
 import com.example.task_manager.model.Task;
@@ -35,29 +34,29 @@ public class TaskController {
 
     // GET /tasks - получить все задачи
     @GetMapping
-    public List<TaskDto> getAllTasks(@AuthenticationPrincipal CustomUserDetails user) {
+    public List<TaskResponse> getAllTasks(@AuthenticationPrincipal CustomUserDetails user) {
         log.info("GET /tasks - userId={}, role={}", user.getId(), user.getRole());
 
         List<Task> tasks = taskService.getAllTasksForUser(user.getId(), user.getRole());
 
         return tasks
-            .stream()
-            .map(task -> taskMapper.toDto(task, user.getRole(), user.getTimeZone())) 
-            .toList();
+                .stream()
+                .map(task -> taskMapper.toTaskResponse(task, user.getTimeZone()))
+                .toList();
     }
 
     // GET /tasks/{id} - получить задачу по ID
     @GetMapping("/{id}")
-    public TaskDto getTaskById(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user) {
+    public TaskResponse getTaskById(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user) {
         log.info("GET /tasks/id={} - userId={}, role={}", id, user.getId(), user.getRole());                                
         Task task = taskService.getTaskByIdForUser(id, user.getId(), user.getRole());
 
-        return taskMapper.toDto(task, user.getRole(), user.getTimeZone());
+        return taskMapper.toTaskResponse(task, user.getTimeZone());
     }
 
     // GET /tasks/user/{userId} - получить задачи конкретного пользователя
     @GetMapping("/user/{userId}")
-    public List<TaskDto> getUserTasks(@PathVariable Long userId, @AuthenticationPrincipal CustomUserDetails user) {
+    public List<TaskResponse> getUserTasks(@PathVariable Long userId, @AuthenticationPrincipal CustomUserDetails user) {
 
         log.info("GET /tasks/user/userId - userId={}, role={}", user.getId(), user.getRole());
 
@@ -65,7 +64,7 @@ public class TaskController {
 
         return tasks
             .stream()
-            .map(task -> taskMapper.toDto(task, user.getRole(), user.getTimeZone()))
+            .map(task -> taskMapper.toTaskResponse(task, user.getTimeZone()))
             .toList();
 
     }
