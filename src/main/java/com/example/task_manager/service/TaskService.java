@@ -282,10 +282,15 @@ public class TaskService {
 
     // new method for GET /tasks
     public List<Task> getAllTasksForUser(Long userId, Role role) {
-        if (role == Role.ADMIN) {
-            return taskRepository.findAll();
-        }
         return taskRepository.findAllByUserId(userId);
+    }
+
+    public List<Task> getAllTaskForAdmin(Role role) {
+        if (role != Role.ADMIN) {
+            throw new AccessDeniedException("Данный ресурс не доступен для пользователя");
+        }
+
+        return taskRepository.findAll();
     }
 
     // new method for GET tasks/{id}
